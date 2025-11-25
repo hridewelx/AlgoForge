@@ -197,4 +197,100 @@ const submitProblem = async (req, res) => {
   }
 };
 
-export { runProblem, submitProblem };
+// Vote on a submission
+const voteSubmission = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { submissionId } = req.params;
+    const { voteType } = req.body; // 'up', 'down', or 'remove'
+
+    if (!submissionId) {
+      return res.status(400).json({ message: "Submission ID is required" });
+    }
+
+    const submission = await Submission.findById(submissionId);
+    if (!submission) {
+      return res.status(404).json({ message: "Submission not found" });
+    }
+
+    // Get current user vote from the votes array
+    const existingVoteIndex = submission.votes?.findIndex(
+      (v) => v.userId.toString() === userId.toString()
+    );
+
+    let voteChange = 0;
+
+    if (existingVoteIndex !== undefined && existingVoteIndex >= 0) {
+      const existingVote = submission.votes[existingVoteIndex];
+      
+      if (voteType === 'remove' || existingVote.type === voteType) {
+        // Remove vote
+        voteChange = existingVote.type === 'up' ? -1 : 1;
+        submission.votes.splice(existingVoteIndex, 1);
+      } else {
+        // Change vote
+        voteChange = voteType === 'up' ? 2 : -2;
+        submission.votes[existingVoteIndex].type = voteType;
+      }
+    } else if (voteType !== 'remove') {
+      // New vote
+      if (!submission.votes) submission.votes = [];
+      submission.votes.push({ userId, type: voteType });
+      voteChange = voteType === 'up' ? 1 : -1;
+    }
+
+    submission.upvote = (submission.upvote || 0) + voteChange;
+    await submission.save();
+
+    // Get user's current vote
+    const userVote = submission.votes?.find(
+      (v) => v.userId.toString() === userId.toString()
+    );
+
+    return res.status(200).json({
+      message: "Vote recorded",
+      upvote: submission.upvote,
+      userVote: userVote?.type || null,
+    });
+  } catch (error) {
+    console.error("Vote error:", error);
+    return res.status(500).json({ message: "Failed to record vote" });
+  }
+};
+
+// Get solutions for a problem with user vote status
+const getSolutions = async (req, res) => {
+  try {
+    const userId = req.user?._id;
+    const { problemId } = req.params;
+
+    const solutions = await Submission.find({
+      problemId,
+      status: "Accepted",
+    })
+      .populate({
+        path: "userId",
+        select: "firstName lastName"
+      })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // Add userVote field to each solution
+    const solutionsWithVotes = solutions.map((sol) => {
+      const userVote = userId
+        ? sol.votes?.find((v) => v.userId?._id?.toString() === userId.toString())?.type
+        : null;
+      return {
+        ...sol,
+        userVote,
+      };
+    });
+
+    return res.status(200).json(solutionsWithVotes);
+  } catch (error) {
+    console.error("Get solutions error:", error);
+    return res.status(500).json({ message: "Failed to get solutions" });
+  }
+};
+
+export { runProblem, submitProblem, voteSubmission, getSolutions };

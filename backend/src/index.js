@@ -19,7 +19,7 @@ app.use(cors({
 }));
 app.use("/user", authenticationRouter);
 app.use("/problems", problemRoutes);
-app.use("/editorial", problemEditorialRoutes);
+app.use("/editorial", problemEditorialRoutes); 
 app.use("/submissions", problemSubmissionRoutes);
 app.use("/algoforgeai", chatWithAiRoutes);
 

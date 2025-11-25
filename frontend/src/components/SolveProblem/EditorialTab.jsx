@@ -1,160 +1,53 @@
-import { useState, useEffect, useRef } from "react";
-import { useSelector } from "react-redux";
+import { useState, useEffect } from "react";
 import axiosClient from "../../utilities/axiosClient";
-import { toast, Toaster } from "react-hot-toast";
+import { toast } from "react-hot-toast";
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
-const EditorialTab = ({ problem }) => {
-  const { user, isAuthenticated } = useSelector((state) => state.authentication);
-  const isAdmin = user?.role === "admin";
+const EditorialTab = ({ problem, editorialData }) => {
+  const [selectedApproach, setSelectedApproach] = useState(0);
+  const [selectedLanguage, setSelectedLanguage] = useState("python");
+  const [approaches, setApproaches] = useState([]);
 
-  const [editorials, setEditorials] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [selectedVideo, setSelectedVideo] = useState(null);
-  const fileInputRef = useRef(null);
-
-  const problemId = problem?._id;
-  // console.log(problemId);
+  const languageIcons = {
+    python: "🐍",
+    javascript: "📜",
+    java: "☕",
+    cpp: "⚡",
+    c: "🔧"
+  };
 
   useEffect(() => {
-    if (problemId) {
-      fetchEditorials();
+    if (editorialData) {
+      // Store videos separately
+      const videos = editorialData.videos || [];
+      
+      // Transform approaches to the format expected by the component
+      const transformedApproaches = (editorialData.approaches || []).map(approach => ({
+        name: approach.name,
+        description: approach.description || "",
+        timeComplexity: approach.complexity?.time || "",
+        spaceComplexity: approach.complexity?.space || "",
+        explanation: approach.explanation || "",
+        solutions: approach.solutions.reduce((acc, sol) => {
+          acc[sol.language] = sol.code;
+          return acc;
+        }, {}),
+        videos: videos.length > 0 ? videos.map(v => ({
+          url: v.secureUrl,
+          thumbnail: v.thumbnailUrl,
+          duration: v.duration,
+          title: v.title
+        })) : []
+      }));
+      
+      setApproaches(transformedApproaches);
+      
+      if (transformedApproaches.length > 0 && selectedApproach === null) {
+        setSelectedApproach(0);
+      }
     }
-  }, [problemId]);
-
-  const fetchEditorials = async () => {
-    try {
-      setIsLoading(true);
-      const { data } = await axiosClient.get(`/editorial/fetch/${problem._id}`);
-      setEditorials(data.editorials || []);
-    } catch (error) {
-      console.error("Error fetching editorials:", error);
-      toast.error("Failed to load editorials");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleFileSelect = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith("video/")) {
-      toast.error("Please select a video file");
-      return;
-    }
-
-    // Validate file size (max 100MB)
-    const maxSize = 100 * 1024 * 1024; // 100MB
-    if (file.size > maxSize) {
-      toast.error("Video size must be less than 100MB");
-      return;
-    }
-
-    setSelectedVideo(file);
-  };
-
-  const handleUpload = async () => {
-    if (!selectedVideo) {
-      toast.error("Please select a video file");
-      return;
-    }
-
-    if (!isAuthenticated || !isAdmin) {
-      toast.error("You must be an admin to upload videos");
-      return;
-    }
-
-    try {
-      setIsUploading(true);
-      setUploadProgress(0);
-
-      // Step 1: Get upload signature from backend
-      const { data: signatureData } = await axiosClient.get(
-        `/editorial/create/${problem._id}`
-      );
-
-      // Step 2: Upload to Cloudinary
-      const formData = new FormData();
-      formData.append("file", selectedVideo);
-      formData.append("api_key", signatureData.api_key);
-      formData.append("timestamp", signatureData.timestamp);
-      formData.append("signature", signatureData.signature);
-      formData.append("public_id", signatureData.public_id);
-
-      const xhr = new XMLHttpRequest();
-
-      xhr.upload.addEventListener("progress", (e) => {
-        if (e.lengthComputable) {
-          const percentComplete = Math.round((e.loaded / e.total) * 100);
-          setUploadProgress(percentComplete);
-        }
-      });
-
-      xhr.addEventListener("load", async () => {
-        if (xhr.status === 200) {
-          const cloudinaryResponse = JSON.parse(xhr.responseText);
-
-          // Step 3: Save metadata to backend
-          try {
-            await axiosClient.post("/editorial/save", {
-              problemId: problem._id,
-              publicId: cloudinaryResponse.public_id,
-              secureUrl: cloudinaryResponse.secure_url,
-              duration: cloudinaryResponse.duration,
-              fileType: "video",
-            });
-
-            toast.success("Video uploaded successfully!");
-            setSelectedVideo(null);
-            setUploadProgress(0);
-            fetchEditorials();
-            if (fileInputRef.current) {
-              fileInputRef.current.value = "";
-            }
-          } catch (error) {
-            console.error("Error saving metadata:", error);
-            const errorMessage = error.response?.data?.error || error.message || "Failed to save video metadata";
-            console.error("Detailed error:", errorMessage);
-            toast.error(errorMessage);
-          }
-        } else {
-          toast.error("Upload failed. Please try again.");
-        }
-        setIsUploading(false);
-      });
-
-      xhr.addEventListener("error", () => {
-        toast.error("Upload failed. Please check your connection.");
-        setIsUploading(false);
-      });
-
-      xhr.open("POST", signatureData.upload_url);
-      xhr.send(formData);
-    } catch (error) {
-      console.error("Upload error:", error);
-      toast.error(error.response?.data?.error || "Upload failed");
-      setIsUploading(false);
-      setUploadProgress(0);
-    }
-  };
-
-  const handleDelete = async (editorialId) => {
-    if (!window.confirm("Are you sure you want to delete this video?")) {
-      return;
-    }
-
-    try {
-      await axiosClient.delete(`/editorial/delete/${editorialId}`);
-      toast.success("Video deleted successfully");
-      fetchEditorials();
-    } catch (error) {
-      console.error("Delete error:", error);
-      toast.error(error.response?.data?.error || "Failed to delete video");
-    }
-  };
+  }, [editorialData]);
 
   const formatDuration = (seconds) => {
     const minutes = Math.floor(seconds / 60);
@@ -163,15 +56,19 @@ const EditorialTab = ({ problem }) => {
   };
 
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
+    return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
     });
   };
 
-  if (isLoading) {
+  const copyCode = (code) => {
+    navigator.clipboard.writeText(code);
+    toast.success("Code copied to clipboard!");
+  };
+
+  if (!editorialData) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="flex flex-col items-center gap-3">
@@ -182,203 +79,197 @@ const EditorialTab = ({ problem }) => {
     );
   }
 
+  if (approaches.length === 0) {
+    return (
+      <div className="p-6 bg-slate-900 text-slate-100 min-h-full">
+        <div className="text-center py-16">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-slate-800 rounded-full mb-4">
+            <svg className="w-10 h-10 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-semibold text-slate-300 mb-2">
+            No Editorial Available
+          </h3>
+          <p className="text-slate-500">
+            Editorial solutions will be available soon
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const currentApproach = approaches[selectedApproach];
+  const availableLanguages = Object.keys(currentApproach.solutions);
+
   return (
     <div className="p-6 bg-slate-900 text-slate-100 min-h-full">
-      <Toaster position="top-right" />
-
+      
       {/* Header */}
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-white mb-2">Video Editorial</h2>
+        <h2 className="text-2xl font-bold text-white mb-2">Editorial Solutions</h2>
         <p className="text-slate-400 text-sm">
-          Watch detailed video explanations and solutions for this problem
+          Comprehensive solutions with detailed explanations
         </p>
       </div>
 
-      {/* Admin Upload Section */}
-      {isAuthenticated && isAdmin && (
-        <div className="mb-8 p-6 bg-slate-800/50 border border-slate-700 rounded-lg">
-          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <svg
-              className="w-5 h-5 text-blue-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-              />
+      {/* Videos */}
+      {currentApproach.videos.length > 0 && (
+        console.log(currentApproach),
+        <div className="mb-6">
+          <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
             </svg>
-            Upload New Video
-          </h3>
-
+            Video Explanation
+          </h4>
           <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="video/*"
-                onChange={handleFileSelect}
-                disabled={isUploading}
-                className="hidden"
-                id="video-upload"
-              />
-              <label
-                htmlFor="video-upload"
-                className={`flex-1 px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-slate-300 cursor-pointer hover:bg-slate-600 transition-colors ${
-                  isUploading ? "opacity-50 cursor-not-allowed" : ""
-                }`}
-              >
-                {selectedVideo
-                  ? selectedVideo.name
-                  : "Choose video file (Max 100MB)"}
-              </label>
-              <button
-                onClick={handleUpload}
-                disabled={!selectedVideo || isUploading}
-                className="px-6 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-slate-600 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
-              >
-                {isUploading ? "Uploading..." : "Upload"}
-              </button>
-            </div>
-
-            {isUploading && (
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm text-slate-400">
-                  <span>Uploading...</span>
-                  <span>{uploadProgress}%</span>
-                </div>
-                <div className="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
-                  <div
-                    className="bg-blue-500 h-full transition-all duration-300 rounded-full"
-                    style={{ width: `${uploadProgress}%` }}
-                  />
+            {currentApproach.videos.map((video, index) => (
+              <div key={index} className="bg-slate-800/50 border border-yellow-400 rounded-lg overflow-hidden">
+                <div className="aspect-video bg-slate-900 relative">
+                  <video
+                    controls
+                    className="w-full h-full"
+                    poster={video.thumbnail}
+                    preload="metadata"
+                  >
+                    <source src={video.url} type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
                 </div>
               </div>
-            )}
+            ))}
           </div>
         </div>
       )}
 
-      {/* Videos List */}
-      {editorials.length === 0 ? (
-        <div className="text-center py-16">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-slate-800 rounded-full mb-4">
-            <svg
-              className="w-10 h-10 text-slate-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+      {/* Approach Tabs */}
+      {approaches.length > 1 && (
+        <div className="mb-6 flex gap-2 overflow-x-auto pb-2">
+          {approaches.map((approach, index) => (
+            <button
+              key={index}
+              onClick={() => {
+                setSelectedApproach(index);
+                const langs = Object.keys(approach.solutions);
+                if (langs.length > 0 && !langs.includes(selectedLanguage)) {
+                  setSelectedLanguage(langs[0]);
+                }
+              }}
+              className={`px-4 py-2 rounded-lg font-semibold transition-all duration-200 whitespace-nowrap ${
+                selectedApproach === index
+                  ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white"
+                  : "bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700"
+              }`}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-              />
-            </svg>
-          </div>
-          <h3 className="text-xl font-semibold text-slate-300 mb-2">
-            No Videos Available
-          </h3>
-          <p className="text-slate-500">
-            {isAdmin
-              ? "Upload the first video editorial for this problem"
-              : "Video editorials will be available soon"}
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {editorials.map((editorial) => (
-            <div
-              key={editorial._id}
-              className="bg-slate-800/50 border border-slate-700 rounded-lg overflow-hidden hover:border-slate-600 transition-colors"
-            >
-              <div className="aspect-video bg-slate-900 relative group">
-                <video
-                  controls
-                  className="w-full h-full"
-                  poster={editorial.thumbnailUrl}
-                  preload="metadata"
-                >
-                  <source src={editorial.secureUrl} type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
-              </div>
-
-              <div className="p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 text-sm text-slate-400 mb-2">
-                      <span className="flex items-center gap-1">
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                        {formatDuration(editorial.duration)}
-                      </span>
-                      <span className="w-1 h-1 rounded-full bg-slate-600"></span>
-                      <span>{formatDate(editorial.createdAt)}</span>
-                      {editorial.userId && (
-                        <>
-                          <span className="w-1 h-1 rounded-full bg-slate-600"></span>
-                          <span className="flex items-center gap-1">
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                              />
-                            </svg>
-                            {editorial.userId.name || editorial.userId.email}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  {isAdmin && (
-                    <button
-                      onClick={() => handleDelete(editorial._id)}
-                      className="ml-4 p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                      title="Delete video"
-                    >
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                        />
-                      </svg>
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
+              {approach.name}
+            </button>
           ))}
+        </div>
+      )}
+
+      {/* Approach Header */}
+      <div className="mb-6 p-6 bg-slate-800/50 border border-slate-700 rounded-lg">
+        <h3 className="text-xl font-bold text-white mb-2">{currentApproach.name}</h3>
+        {currentApproach.description && (
+          <p className="text-slate-300 mb-4">{currentApproach.description}</p>
+        )}
+        <div className="flex items-center gap-6 text-sm">
+          {currentApproach.timeComplexity && (
+            <div className="flex items-center gap-2">
+              <span className="text-slate-400">Time:</span>
+              <span className="px-3 py-1 bg-blue-500/10 border border-blue-500/30 text-blue-300 rounded-lg font-mono">
+                {currentApproach.timeComplexity}
+              </span>
+            </div>
+          )}
+          {currentApproach.spaceComplexity && (
+            <div className="flex items-center gap-2">
+              <span className="text-slate-400">Space:</span>
+              <span className="px-3 py-1 bg-purple-500/10 border border-purple-500/30 text-purple-300 rounded-lg font-mono">
+                {currentApproach.spaceComplexity}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      
+
+      {/* Explanation */}
+      {currentApproach.explanation && (
+        <div className="mb-6">
+          <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Explanation
+          </h4>
+          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+            <div className="prose prose-invert max-w-none">
+              <p className="text-slate-300 whitespace-pre-wrap leading-relaxed">
+                {currentApproach.explanation}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Code Solutions */}
+      {availableLanguages.length > 0 && (
+        <div>
+          <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <svg className="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+            </svg>
+            Implementation
+          </h4>
+
+          {/* Language Tabs */}
+          <div className="mb-4 flex gap-2 overflow-x-auto pb-2">
+            {availableLanguages.map((lang) => (
+              <button
+                key={lang}
+                onClick={() => setSelectedLanguage(lang)}
+                className={`px-4 py-2 rounded-lg font-semibold transition-all duration-200 flex items-center gap-2 whitespace-nowrap ${
+                  selectedLanguage === lang
+                    ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white"
+                    : "bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700"
+                }`}
+              >
+                <span className="text-xl">{languageIcons[lang] || "💻"}</span>
+                {lang.charAt(0).toUpperCase() + lang.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          {/* Code Display */}
+          <div className="relative bg-slate-800/50 border border-slate-700 rounded-lg overflow-hidden">
+            <div className="absolute top-4 right-4 z-10">
+              <button
+                onClick={() => copyCode(currentApproach.solutions[selectedLanguage])}
+                className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                Copy
+              </button>
+            </div>
+            <SyntaxHighlighter
+              language={selectedLanguage === "cpp" ? "cpp" : selectedLanguage}
+              style={vscDarkPlus}
+              customStyle={{
+                margin: 0,
+                padding: "1.5rem",
+                background: "transparent",
+                fontSize: "0.9rem"
+              }}
+              showLineNumbers
+            >
+              {currentApproach.solutions[selectedLanguage]}
+            </SyntaxHighlighter>
+          </div>
         </div>
       )}
     </div>

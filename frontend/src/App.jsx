@@ -16,8 +16,7 @@ import Questions from "./components/Admin/Questions";
 import { ChatAi } from "./components/SolveProblem";
 import QuestionCreation from "./components/Admin/QuestionCreation";
 import QuestionUpdation from "./components/Admin/QuestionUpdation";
-
-// Add these routes
+import EditorialManagement from "./components/Admin/EditorialManagement";
 
 function App() {
   const dispatch = useDispatch();
@@ -58,6 +57,7 @@ function App() {
           <Route path="questions" element={<Questions />} />
           <Route path="questions/create" element={<QuestionCreation />} />
           <Route path="questions/update/:problemId" element={<QuestionUpdation />} />
+          <Route path="editorials/:problemId" element={<EditorialManagement />} />
         </Route>
 
         {/* <Route path="/admin/questions/create" element={<QuestionCreation />} />  */}

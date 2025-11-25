@@ -19,6 +19,7 @@ import {
   LoadingSpinner,
   ChatAi,
   EditorialTab,
+  SolutionsTab,
 } from "../components/SolveProblem";
 
 const SolveProblem = () => {
@@ -38,6 +39,17 @@ const SolveProblem = () => {
   const [language, setLanguage] = useState("python");
   const [activeTestCaseIndex, setActiveTestCaseIndex] = useState(0);
   const [submissionInfo, setSubmissionInfo] = useState([]);
+  const [editorialData, setEditorialData] = useState(null);
+  const [solutionsData, setSolutionsData] = useState([]);
+  const [chatMessages, setChatMessages] = useState([
+    {
+      id: 1,
+      text: "Welcome to AlgoForge AI. I'm here to assist you with coding challenges, algorithm design, and technical problem-solving. How can I help you today?",
+      sender: "ai",
+      timestamp: new Date(),
+      type: "text",
+    },
+  ]);
 
   // Feature states
   const [showStickyNotes, setShowStickyNotes] = useState(false);
@@ -77,6 +89,13 @@ const SolveProblem = () => {
       fetchSubmissions();
     }
   }, [user, problem]);
+
+  useEffect(() => {
+    if (problem) {
+      fetchEditorial();
+      fetchSolutions();
+    }
+  }, [problem]);
 
   // Clock logic
   useEffect(() => {
@@ -191,6 +210,27 @@ const SolveProblem = () => {
     }
   };
 
+  const fetchEditorial = async () => {
+    try {
+      const { data } = await axiosClient.get(`/editorial/fetch/${problemId}`);
+      setEditorialData(data.editorial || { videos: [], approaches: [] });
+    } catch (error) {
+      console.error("Error fetching editorial:", error);
+      setEditorialData({ videos: [], approaches: [] });
+    }
+  };
+
+  const fetchSolutions = async () => {
+    try {
+      const { data } = await axiosClient.get(`/submissions/solutions/${problemId}`);
+      console.log("solutions data", data);
+      setSolutionsData(data || []);
+    } catch (error) {
+      console.error("Error fetching solutions:", error);
+      setSolutionsData([]);
+    }
+  };
+ 
   const updateCodeFromBoilerplate = (problemData = problem) => {
     const boilerplate = problemData?.boilerplateCode?.find(
       (bp) => bp.language === language
@@ -358,6 +398,10 @@ const SolveProblem = () => {
         setShowStickyNotes={setShowStickyNotes}
         problem={problem}
         submissionInfo={submissionInfo}
+        editorialData={editorialData}
+        solutionsData={solutionsData}
+        chatMessages={chatMessages}
+        setChatMessages={setChatMessages}
         getDifficultyColor={getDifficultyColor}
         submissionResults={submissionResults}
         showResultsTab={showResultsTab}
@@ -388,6 +432,10 @@ const MainContent = ({
   setShowStickyNotes,
   problem,
   submissionInfo,
+  editorialData,
+  solutionsData,
+  chatMessages,
+  setChatMessages,
   getDifficultyColor,
   submissionResults,
   showResultsTab,
@@ -413,6 +461,10 @@ const MainContent = ({
       setShowStickyNotes={setShowStickyNotes}
       problem={problem}
       submissionInfo={submissionInfo}
+      editorialData={editorialData}
+      solutionsData={solutionsData}
+      chatMessages={chatMessages}
+      setChatMessages={setChatMessages}
       getDifficultyColor={getDifficultyColor}
       submissionResults={submissionResults}
       showResultsTab={showResultsTab}
@@ -452,6 +504,10 @@ const LeftPanel = ({
   setShowStickyNotes,
   problem,
   submissionInfo,
+  editorialData,
+  solutionsData,
+  chatMessages,
+  setChatMessages,
   getDifficultyColor,
   submissionResults,
   showResultsTab,
@@ -542,12 +598,18 @@ const LeftPanel = ({
       )}
 
       {activeTab === "editorial" && (
-        <EditorialTab problem={problem} />
+        <EditorialTab problem={problem} editorialData={editorialData} />
+      )}
+
+      {activeTab === "solutions" && (
+        <SolutionsTab problem={problem} solutionsData={solutionsData} />
       )}
 
       {activeTab === "chatai" && (
         <ChatAi
           problem={problem}
+          messages={chatMessages}
+          setMessages={setChatMessages}
         />
       )}
 
@@ -570,10 +632,6 @@ const LeftPanel = ({
           }}
         />
       )}
-
-      {activeTab === "solutions" &&
-        !showStickyNotes &&
-        activeTab !== "notes" && <ComingSoonTab tabName={activeTab} />}
     </div>
   </div>
 );

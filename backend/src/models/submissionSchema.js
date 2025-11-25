@@ -4,11 +4,13 @@ import { Schema } from "mongoose";
 const submissionSchema = new Schema ({
     userId: {
         type: Schema.Types.ObjectId,
+        ref: "user",
         required: true,
         trim: true,
     },
     problemId: {
         type: Schema.Types.ObjectId,
+        ref: "problem",
         required: true,
         trim: true
     },
@@ -54,7 +56,24 @@ const submissionSchema = new Schema ({
         required: true, 
         trim: true,
         default: 0
-    }
+    }, 
+    upvote: {
+        type: Number,
+        trim: true,
+        default: 0
+    },
+    votes: [{
+        userId: {
+            type: Schema.Types.ObjectId,
+            ref: "user",
+            required: true
+        },
+        type: {
+            type: String,
+            enum: ["up", "down"],
+            required: true
+        }
+    }]
 
 }, {timestamps: true});
 

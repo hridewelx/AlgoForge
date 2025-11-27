@@ -10,6 +10,7 @@ import { userRegistration } from '../authenticationSlicer';
 const signupSchema = z.object({
   firstName: z.string().min(3, "First name must be at least 3 characters").max(30).trim(),
   lastName: z.string().max(30).trim(),
+  username: z.string().min(3, "Username must be at least 3 characters").max(20, "Username must be at most 20 characters").regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers and underscores").trim(),
   emailId: z.string().email("Invalid email").trim().toLowerCase(),
   password: z
     .string()
@@ -142,6 +143,29 @@ const SignupPage = () => {
                     </p>
                   )}
                 </div>
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="username" className="block text-sm font-medium text-slate-300 mb-2">
+                Username
+              </label>
+              <div className="mt-1">
+                <input
+                  id="username"
+                  type="text"
+                  {...register("username")}
+                  className="appearance-none block w-full px-4 py-3 border border-slate-600 rounded-lg shadow-sm placeholder-slate-500 bg-slate-700/50 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 sm:text-sm"
+                  placeholder="johndoe123"
+                />
+                {errors.username && (
+                  <p className="mt-2 text-sm text-red-400 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {errors.username.message}
+                  </p>
+                )}
               </div>
             </div>
 

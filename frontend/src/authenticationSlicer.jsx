@@ -78,7 +78,7 @@ const authenticationSlice = createSlice({
   initialState: {
     user: null,
     isAuthenticated: false,
-    loading: false,
+    loading: true,  // Start with true to wait for auth check on page load
     error: null,
   },
   reducers: {},

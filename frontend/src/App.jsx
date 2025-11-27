@@ -8,6 +8,8 @@ import { checkAuthenticatedUser } from "./authenticationSlicer";
 import { useEffect } from "react";
 import ProblemSet from "./pages/ProblemSet";
 import SolveProblem from "./pages/SolveProblem";
+import UserProfile from "./pages/UserProfile";
+import Settings from "./pages/Settings";
 
 // In your main router configuration
 import AdminLayout from "./components/Admin/AdminLayout";
@@ -37,6 +39,8 @@ function App() {
         {/* <Route path="/signup" element={ isAuthenticated ? <Navigate to="/"></Navigate> : <Signup></Signup> }></Route> */}
         <Route path="/signup" element={<Signup></Signup>}></Route>
         <Route path="/problemset" element={<ProblemSet></ProblemSet>}></Route>
+        <Route path="/algoforge/profile/:username" element={<UserProfile></UserProfile>}></Route>
+        <Route path="/algoforge/:username/settings" element={<Settings></Settings>}></Route>
 
         <Route
           path="/problem/:problemId"

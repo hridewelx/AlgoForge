@@ -9,7 +9,7 @@ import Submission from "../models/submissionSchema.js";
 const register = async(req, res) => {
     try {
         validateInformation(req.body);
-        const {firstName, emailId, password, confirmPassword} = req.body;
+        const {firstName, emailId, password, confirmPassword, username} = req.body;
         if (!validator.isEmail(emailId)) {
             return res.status(400).json({message: "Invalid email"});
         }
@@ -18,6 +18,15 @@ const register = async(req, res) => {
         }
         if (password !== confirmPassword) {
             return res.status(400).json({message: "Passwords do not match"});
+        }
+        if (!username || username.length < 3) {
+            return res.status(400).json({message: "Username must be at least 3 characters"});
+        }
+
+        // Check if username exists
+        const existingUser = await User.findOne({ username });
+        if (existingUser) {
+            return res.status(400).json({message: "Username already taken"});
         }
 
         req.body.role = "user";
@@ -32,6 +41,7 @@ const register = async(req, res) => {
             _id: user._id,
             firstName: user.firstName,
             emailId: user.emailId,
+            username: user.username
         }
         res.status(200).json({
             user: reply,
@@ -45,12 +55,22 @@ const register = async(req, res) => {
 
 const login = async(req, res) => {
     try {
-        const {emailId, password} = req.body;
-        if (!validator.isEmail(emailId)) {
-            return res.status(400).json({message: "Invalid email"});
+        const {emailId, identifier, password} = req.body;
+        const loginIdentifier = (identifier || emailId)?.toLowerCase();
+
+        if (!loginIdentifier) {
+            return res.status(400).json({message: "Email or Username is required"});
         }
     
-        const user = await User.findOne({emailId});
+        // Check primary email, secondary emails, or username
+        const user = await User.findOne({
+            $or: [
+                { emailId: loginIdentifier },
+                { username: loginIdentifier },
+                { secondaryEmails: loginIdentifier }
+            ]
+        });
+
         if (!user) {
             return res.status(400).json({message: "User not found"});
         }
@@ -67,6 +87,7 @@ const login = async(req, res) => {
             _id: user._id,
             firstName: user.firstName,
             emailId: user.emailId,
+            username: user.username
         }
         res.status(200).json({
             user: reply,
@@ -149,22 +170,27 @@ const deleteUser = async(req, res) => {
     }
 }
 
-const checkAuthenticatedUser = (req, res) => {
+const checkAuthenticatedUser = async(req, res) => {
     try {
+        const {_id} = req.user;
+        const user = await User.findById(_id);
+        if (!user) {
+            return res.status(400).json({message: "User not found"});
+        }
         const reply = {
-            _id: req.user._id,
-            firstName: req.user.firstName,
-            lastName: req.user?.lastName || "",
-            // emailId: req.user.emailId,
-            role: req.user.role
+            _id: user._id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            emailId: user.emailId,
+            username: user.username
         }
         res.status(200).json({
             user: reply,
-            message: "User is authenticated"
+            message: "User authenticated"
         });
     } catch (error) {
         console.log(error);
-        res.status(400).json({message: "User authentication failed"});
+        res.status(400).json({message: "User not authenticated"});
     }
 }
 

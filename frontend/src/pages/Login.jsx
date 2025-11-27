@@ -8,7 +8,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { userLogin } from "../authenticationSlicer";
 
 const loginSchema = z.object({
-  emailId: z.string().email("Invalid email address").trim().toLowerCase(),
+  identifier: z.string().min(1, "Email or Username is required").trim(),
   password: z.string().min(1, "Password is required"),
 });
 
@@ -21,6 +21,7 @@ const LoginPage = () => {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(loginSchema),
@@ -35,13 +36,11 @@ const LoginPage = () => {
     }
   }, [isAuthenticated, navigate, redirectTo]);
 
-  const onSubmit = (data) => {
+  const onSubmit = async (data) => {
     setIsLoading(true);
     try {
-      const result = dispatch(userLogin(data));
-      if (result) {
-        toast.success("Login successful!");
-      }
+      await dispatch(userLogin(data)).unwrap();
+      toast.success("Login successful!");
     } catch (error) {
       toast.error(
         error.response?.data?.message || error.message || "Login failed"
@@ -54,9 +53,9 @@ const LoginPage = () => {
 
   const handleDemoLogin = () => {
     // Auto-fill demo credentials
-    document.getElementById("emailId").value = "demo@example.com";
-    document.getElementById("password").value = "Demo123!";
-    toast.success("Demo credentials filled! REMEMBER: This won't log you in.");
+    setValue("identifier", "demo@example.com");
+    setValue("password", "Demo123!");
+    toast.success("Demo credentials filled!");
   };
 
   const togglePasswordVisibility = () => {
@@ -115,21 +114,21 @@ const LoginPage = () => {
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <div>
               <label
-                htmlFor="emailId"
+                htmlFor="identifier"
                 className="block text-sm font-medium text-slate-300 mb-2"
               >
-                Email address
+                Email or Username
               </label>
               <div className="mt-1">
                 <input
-                  id="emailId"
-                  type="email"
-                  autoComplete="email"
-                  {...register("emailId")}
+                  id="identifier"
+                  type="text"
+                  autoComplete="username"
+                  {...register("identifier")}
                   className="appearance-none block w-full px-4 py-3 border border-slate-600 rounded-lg shadow-sm placeholder-slate-500 bg-slate-700/50 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 sm:text-sm"
-                  placeholder="you@example.com"
+                  placeholder="Username or email"
                 />
-                {errors.emailId && (
+                {errors.identifier && (
                   <p className="mt-2 text-sm text-red-400 flex items-center">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -145,7 +144,7 @@ const LoginPage = () => {
                         d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                       />
                     </svg>
-                    {errors.emailId.message}
+                    {errors.identifier.message}
                   </p>
                 )}
               </div>

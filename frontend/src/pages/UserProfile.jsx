@@ -1,11 +1,9 @@
 import { useState, useEffect } from "react";
-import { useNavigate, NavLink, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import axiosClient from "../utilities/axiosClient";
 import { toast } from "react-hot-toast";
-import { Code2 } from "lucide-react";
-import UserAvatar from "../components/UI/UserAvatar";
-import AuthButton from "../components/UI/AuthButton";
+import Navbar from "../components/UI/Navbar";
 import {
   ProfileCard,
   SkillsSection,
@@ -113,55 +111,7 @@ const UserProfile = () => {
         <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-[120px]" />
         <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-emerald-500/5 rounded-full blur-[120px] -translate-x-1/2 -translate-y-1/2" />
       </div>
-
-      {/* Navbar */}
-      <nav className="sticky top-0 z-50 border-b border-white/5 bg-slate-950/80 backdrop-blur-xl">
-        <div className="container mx-auto px-6 h-16 flex items-center justify-between">
-          <div
-            className="flex items-center gap-3 cursor-pointer"
-            onClick={() => navigate("/")}
-          >
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-blue-400 flex items-center justify-center shadow-lg shadow-blue-500/20">
-              <Code2 className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-lg font-bold text-white tracking-tight">
-              AlgoForge
-            </span>
-          </div>
-
-          <div className="flex items-center gap-8">
-            <div className="hidden md:flex items-center gap-6 text-sm font-medium">
-              <NavLink
-                to="/problemset"
-                className={({ isActive }) =>
-                  `hover:text-white transition-colors ${
-                    isActive ? "text-white" : "text-slate-400"
-                  }`
-                }
-              >
-                Problems
-              </NavLink>
-              <NavLink
-                to={
-                  user?.username
-                    ? `/algoforge/profile/${user.username}`
-                    : "/profile"
-                }
-                className={({ isActive }) =>
-                  `hover:text-white transition-colors ${
-                    isActive ? "text-white" : "text-slate-400"
-                  }`
-                }
-              >
-                Profile
-              </NavLink>
-            </div>
-            <div className="pl-6 border-l border-white/10">
-              {isAuthenticated ? <UserAvatar /> : <AuthButton />}
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       <main className="relative z-10 container mx-auto px-4 py-8 max-w-7xl">
         <div className="grid lg:grid-cols-12 gap-6">

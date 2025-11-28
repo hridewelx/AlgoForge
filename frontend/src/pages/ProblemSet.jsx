@@ -2,8 +2,7 @@ import { useEffect, useState, useMemo, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import axiosClient from "../utilities/axiosClient";
 import { NavLink } from "react-router";
-import UserAvatar from "../components/UI/UserAvatar";
-import AuthButton from "../components/UI/AuthButton";
+import Navbar from "../components/UI/Navbar";
 import { SlidersHorizontal, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 
 // --- Icons (Inline SVGs for zero-dependency) ---
@@ -448,47 +447,7 @@ function ProblemSet() {
         <div className="absolute left-0 right-0 top-0 -z-10 m-auto h-[310px] w-[310px] rounded-full bg-blue-500 opacity-20 blur-[100px]"></div>
       </div>
 
-      {/* Navigation Bar (Sticky) */}
-      <nav className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-slate-800">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-white"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
-                  />
-                </svg>
-              </div>
-              <NavLink
-                to="/"
-                className="text-xl font-bold text-white tracking-tight"
-              >
-                AlgoForge
-              </NavLink>
-            </div>
-
-            <div className="flex items-center gap-6">
-              <NavLink
-                to="/"
-                className="text-sm font-medium text-slate-400 hover:text-white transition-colors"
-              >
-                Dashboard
-              </NavLink>
-              {isAuthenticated ? <UserAvatar /> : <AuthButton />}
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       {/* Main Content */}
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-10">

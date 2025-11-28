@@ -41,7 +41,8 @@ const register = async(req, res) => {
             _id: user._id,
             firstName: user.firstName,
             emailId: user.emailId,
-            username: user.username
+            username: user.username,
+            role: user.role
         }
         res.status(200).json({
             user: reply,
@@ -87,7 +88,8 @@ const login = async(req, res) => {
             _id: user._id,
             firstName: user.firstName,
             emailId: user.emailId,
-            username: user.username
+            username: user.username,
+            role: user.role
         }
         res.status(200).json({
             user: reply,
@@ -182,7 +184,8 @@ const checkAuthenticatedUser = async(req, res) => {
             firstName: user.firstName,
             lastName: user.lastName,
             emailId: user.emailId,
-            username: user.username
+            username: user.username,
+            role: user.role
         }
         res.status(200).json({
             user: reply,

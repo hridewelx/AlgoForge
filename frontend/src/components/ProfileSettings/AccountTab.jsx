@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Check, X, Eye, EyeOff, Linkedin, Github, Twitter, Plus, Trash2, Mail, AlertCircle } from "lucide-react";
 
-// Email validation helper
 const isValidEmail = (email) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
@@ -25,7 +24,6 @@ const AccountTab = ({
   formData,
   setActiveTab,
   setShowDeleteModal,
-  // New props for email management
   secondaryEmails = [],
   handleAddSecondaryEmail,
   handleRemoveSecondaryEmail,

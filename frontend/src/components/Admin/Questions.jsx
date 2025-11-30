@@ -156,51 +156,32 @@ const Questions = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="space-y-6">
+      <div className="space-y-6">
         {/* Header Section */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-          <div className="text-center lg:text-left">
-            <div className="flex items-center justify-center lg:justify-start gap-3 mb-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-                <svg
-                  className="w-6 h-6 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-slate-200 bg-clip-text text-transparent">
-                  Question Bank
-                </h1>
-                <p className="text-slate-400 mt-1 font-medium">
-                  Manage your coding challenges with precision
-                </p>
-              </div>
-            </div>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white">
+              Question Bank
+            </h1>
+            <p className="text-slate-400 mt-1">
+              Manage your coding challenges
+            </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center gap-4">
+          <div className="flex items-center gap-3">
             {/* View Mode Toggle */}
-            <div className="flex bg-slate-800/80 rounded-xl p-1.5 border border-slate-700 shadow-inner">
+            <div className="flex bg-slate-800 rounded-lg p-1 border border-slate-700">
               <button
                 onClick={() => setViewMode("table")}
-                className={`p-3 rounded-lg transition-all duration-300 ${
+                className={`p-2 rounded-md transition-all ${
                   viewMode === "table"
-                    ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg transform scale-105"
-                    : "text-slate-400 hover:text-white hover:bg-slate-700/50"
+                    ? "bg-blue-600 text-white"
+                    : "text-slate-400 hover:text-white"
                 }`}
               >
                 <svg
-                  className="w-5 h-5"
+                  className="w-4 h-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -215,14 +196,14 @@ const Questions = () => {
               </button>
               <button
                 onClick={() => setViewMode("grid")}
-                className={`p-3 rounded-lg transition-all duration-300 ${
+                className={`p-2 rounded-md transition-all ${
                   viewMode === "grid"
-                    ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg transform scale-105"
-                    : "text-slate-400 hover:text-white hover:bg-slate-700/50"
+                    ? "bg-blue-600 text-white"
+                    : "text-slate-400 hover:text-white"
                 }`}
               >
                 <svg
-                  className="w-5 h-5"
+                  className="w-4 h-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -239,9 +220,9 @@ const Questions = () => {
 
             {/* Add Question Button */}
             <Link to="/admin/questions/create">
-              <button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-6 py-3.5 rounded-xl font-semibold transition-all duration-300 flex items-center gap-3 shadow-xl hover:shadow-2xl transform hover:-translate-y-0.5 border border-blue-500/30">
+              <button className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2">
                 <svg
-                  className="w-5 h-5"
+                  className="w-4 h-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -253,329 +234,233 @@ const Questions = () => {
                     d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                   />
                 </svg>
-                <span>Create Question</span>
+                <span className="hidden sm:inline">Create Question</span>
+                <span className="sm:hidden">Add</span>
               </button>
             </Link>
           </div>
         </div>
 
         {/* Stats Dashboard */}
-        <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {[
             {
-              label: "Total Questions",
+              label: "Total",
               value: stats.total,
+              icon: <Files size={18} />,
               color: "blue",
-              icon: <Files size={20} strokeWidth={1.5} />,
             },
             {
               label: "Easy",
               value: stats.easy,
-              color: "green",
-              icon: <CheckCircle size={20} strokeWidth={1.5} />,
+              icon: <CheckCircle size={18} />,
+              color: "emerald",
             },
             {
               label: "Medium",
               value: stats.medium,
-              color: "amber",
-              icon: <Zap size={20} strokeWidth={1.5} />,
+              icon: <Zap size={18} />,
+              color: "orange",
             },
             {
               label: "Hard",
               value: stats.hard,
+              icon: <HeartPulse size={18} />,
               color: "red",
-              icon: <HeartPulse size={20} strokeWidth={1.5} />,
             },
             {
               label: "Filtered",
               value: stats.filtered,
+              icon: <Filter size={18} />,
               color: "purple",
-              icon: <Filter size={20} strokeWidth={1.5} />,
             },
           ].map((stat, index) => (
             <div
               key={index}
-              className="bg-slate-800/60 backdrop-blur-sm rounded-2xl p-5 border border-slate-700/50 hover:border-slate-600 transition-all duration-300 group hover:transform hover:-translate-y-1 shadow-lg hover:shadow-xl"
+              className={`bg-slate-900/50 backdrop-blur-sm rounded-xl p-4 border border-slate-800 hover:border-${stat.color}-500/30 transition-all`}
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <div
-                    className={`text-2xl font-bold text-${stat.color}-400 group-hover:scale-110 transition-transform duration-300`}
-                  >
+                  <div className={`text-xl font-bold text-${stat.color}-400`}>
                     {stat.value}
                   </div>
-                  <div className="text-sm text-slate-400 mt-1 font-medium">
+                  <div className="text-xs text-slate-500 mt-0.5">
                     {stat.label}
                   </div>
                 </div>
-                <div
-                  className={`text-2xl opacity-80 group-hover:scale-110 transition-transform duration-300`}
-                >
+                <div className={`text-${stat.color}-400/50`}>
                   {stat.icon}
                 </div>
-              </div>
-              <div
-                className={`w-full h-1 bg-${stat.color}-500/20 rounded-full mt-3 overflow-hidden`}
-              >
-                <div
-                  className={`h-full bg-${stat.color}-500 rounded-full transition-all duration-1000 ease-out`}
-                  style={{
-                    width: `${(stat.value / Math.max(stats.total, 1)) * 100}%`,
-                  }}
-                />
               </div>
             </div>
           ))}
         </div>
 
         {/* Filters and Controls */}
-        <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 shadow-xl">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-            <div className="flex flex-col sm:flex-row gap-4 flex-1">
-              <div className="flex-1 relative">
-                <svg
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-                <input
-                  placeholder="Search by title..."
-                  className="w-full bg-slate-700/50 border border-slate-600 text-white placeholder-slate-400 rounded-xl pl-12 pr-4 py-3.5 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all duration-200"
-                  value={filters.search}
-                  onChange={(e) =>
-                    setFilters({ ...filters, search: e.target.value })
-                  }
+        <div className="bg-slate-900/50 backdrop-blur-sm rounded-xl p-4 border border-slate-800">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-1 relative">
+              <svg
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                 />
-              </div>
-              <select
-                className="bg-slate-700/50 border border-slate-600 text-white rounded-xl px-4 py-3.5 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all duration-200 appearance-none cursor-pointer"
-                value={filters.difficulty}
+              </svg>
+              <input
+                placeholder="Search questions..."
+                className="w-full bg-slate-800 border border-slate-700 text-white placeholder-slate-500 rounded-lg pl-10 pr-4 py-2.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                value={filters.search}
                 onChange={(e) =>
-                  setFilters({ ...filters, difficulty: e.target.value })
+                  setFilters({ ...filters, search: e.target.value })
                 }
-              >
-                <option value="">All Difficulty Levels</option>
-                <option value="Easy">Easy</option>
-                <option value="Medium">Medium</option>
-                <option value="Hard">Hard</option>
-              </select>
+              />
             </div>
-            <div className="flex items-center gap-4">
-              <select
-                className="bg-slate-700/50 border border-slate-600 text-white rounded-xl px-4 py-3.5 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all duration-200 appearance-none cursor-pointer"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-              >
-                <option value="title">Sort by Title</option>
-                <option value="difficulty">Sort by Difficulty</option>
-                <option value="newest">Sort by Newest</option>
-              </select>
-            </div>
+            <select
+              className="bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-2.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+              value={filters.difficulty}
+              onChange={(e) =>
+                setFilters({ ...filters, difficulty: e.target.value })
+              }
+            >
+              <option value="">All Levels</option>
+              <option value="Easy">Easy</option>
+              <option value="Medium">Medium</option>
+              <option value="Hard">Hard</option>
+            </select>
+            <select
+              className="bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-2.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+            >
+              <option value="title">By Title</option>
+              <option value="difficulty">By Difficulty</option>
+              <option value="newest">By Newest</option>
+            </select>
           </div>
         </div>
 
         {/* Content Area */}
         {loading ? (
-          <div className="flex items-center justify-center min-h-96 bg-slate-800/30 rounded-2xl border border-slate-700/50">
+          <div className="flex items-center justify-center h-64 bg-slate-900/50 rounded-xl border border-slate-800">
             <div className="text-center">
-              <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-slate-400 text-lg font-medium">
-                Loading your questions...
-              </p>
-              <p className="text-slate-500 text-sm mt-2">
-                Preparing your coding challenges
-              </p>
+              <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+              <p className="text-slate-400 text-sm">Loading questions...</p>
             </div>
           </div>
         ) : (
-          <div className="bg-slate-800/30 backdrop-blur-sm rounded-2xl border border-slate-700/50 shadow-xl overflow-hidden">
+          <div className="bg-slate-900/50 backdrop-blur-sm rounded-xl border border-slate-800 overflow-hidden">
             {viewMode === "table" ? (
               // Table View
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-slate-700/50 border-b border-slate-700/50">
+                  <thead className="bg-slate-800/50 border-b border-slate-700">
                     <tr>
-                      <th className="p-6 text-left text-slate-300 font-bold text-lg">
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">
                         Problem
                       </th>
-                      <th className="p-6 text-left text-slate-300 font-bold text-lg">
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider hidden sm:table-cell">
                         Difficulty
                       </th>
-                      <th className="p-6 text-left text-slate-300 font-bold text-lg">
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider hidden md:table-cell">
                         Tags
                       </th>
-                      <th className="p-6 text-left text-slate-300 font-bold text-lg">
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-700/30">
+                  <tbody className="divide-y divide-slate-800">
                     {filteredAndSortedQuestions.map((question, index) => (
                       <tr
                         key={question._id}
-                        className={`group transition-all duration-300 hover:bg-slate-700/20 ${
+                        className={`group hover:bg-slate-800/50 transition-colors ${
                           selected.includes(question._id)
-                            ? "bg-blue-500/10 border-l-4 border-l-blue-500"
-                            : "border-l-4 border-l-transparent"
+                            ? "bg-blue-500/5"
+                            : ""
                         }`}
                       >
                         {/* Question Title */}
-                        <td className="p-6">
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 bg-gradient-to-br from-slate-600 to-slate-700 rounded-xl flex items-center justify-center text-slate-300 font-bold text-sm group-hover:from-slate-500 group-hover:to-slate-600 transition-all duration-300">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center text-slate-400 text-xs font-medium flex-shrink-0">
                               {index + 1}
                             </div>
-                            <div>
-                              <div className="text-white font-semibold text-lg group-hover:text-blue-300 transition-colors duration-200">
+                            <div className="min-w-0">
+                              <div className="text-sm font-medium text-white truncate max-w-[200px] sm:max-w-[300px]">
                                 {question.title}
                               </div>
-                              <div className="text-slate-400 text-sm mt-1 flex items-center gap-2">
-                                <svg
-                                  className="w-4 h-4"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                  />
-                                </svg>
-                                {new Date(
-                                  question.createdAt
-                                ).toLocaleDateString()}
+                              <div className="text-xs text-slate-500 sm:hidden mt-0.5">
+                                <span className={`${getDifficultyColor(question.difficulty).split(' ')[0]}`}>
+                                  {question.difficulty}
+                                </span>
                               </div>
                             </div>
                           </div>
                         </td>
-
                         {/* Difficulty */}
-                        <td className="p-6">
+                        <td className="px-4 py-3 hidden sm:table-cell">
                           <span
-                            className={`px-4 py-2 rounded-xl text-sm font-bold border-2 transition-all duration-200 ${getDifficultyColor(
+                            className={`px-2 py-1 text-xs font-medium rounded-full ${getDifficultyColor(
                               question.difficulty
                             )}`}
                           >
                             {question.difficulty}
                           </span>
                         </td>
-
                         {/* Tags */}
-                        <td className="p-6">
-                          <div className="flex flex-wrap gap-2">
-                            {question.tags?.slice(0, 3).map((tag, tagIndex) => (
+                        <td className="px-4 py-3 hidden md:table-cell">
+                          <div className="flex flex-wrap gap-1">
+                            {question.tags?.slice(0, 2).map((tag, i) => (
                               <span
-                                key={tagIndex}
-                                className="px-3 py-1.5 bg-gradient-to-r from-blue-500/10 to-purple-500/10 text-blue-300 rounded-lg text-xs font-semibold border border-blue-400/20 hover:border-blue-400/40 transition-all duration-200"
+                                key={i}
+                                className="px-2 py-0.5 text-xs text-slate-400 bg-slate-800 rounded"
                               >
                                 {tag}
                               </span>
                             ))}
-                            {question.tags?.length > 3 && (
-                              <span className="px-3 py-1.5 bg-slate-600/50 text-slate-400 rounded-lg text-xs font-semibold border border-slate-500/30">
-                                +{question.tags.length - 3}
+                            {question.tags?.length > 2 && (
+                              <span className="px-2 py-0.5 text-xs text-slate-500">
+                                +{question.tags.length - 2}
                               </span>
                             )}
                           </div>
                         </td>
-
                         {/* Actions */}
-                        <td className="p-6">
-                          <div className="flex items-center gap-3">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-end gap-1">
                             <button
-                              onClick={() =>
-                                navigate(
-                                  `/admin/questions/update/${question._id}`
-                                )
-                              }
-                              className="p-3 text-slate-400 hover:text-amber-400 hover:bg-amber-400/10 rounded-xl border border-transparent hover:border-amber-400/20 transition-all duration-200 group relative"
-                              title="Edit Question"
+                              onClick={() => handleView(question._id)}
+                              className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
+                              title="View"
                             >
-                              <svg
-                                className="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                />
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={() => navigate(`/admin/questions/update/${question._id}`)}
+                              className="p-1.5 text-slate-400 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg transition-colors"
+                              title="Edit"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                               </svg>
                             </button>
                             <button
                               onClick={() => openDeleteModal(question)}
-                              className="p-3 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-xl border border-transparent hover:border-red-400/20 transition-all duration-200 group relative"
-                              title="Delete Question"
+                              className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                              title="Delete"
                             >
-                              <svg
-                                className="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                />
-                              </svg>
-                            </button>
-                            <button
-                              onClick={() => navigate(`/admin/editorials/${question._id}`)}
-                              className="p-3 text-slate-400 hover:text-purple-400 hover:bg-purple-400/10 rounded-xl border border-transparent hover:border-purple-400/20 transition-all duration-200 group relative"
-                              title="Manage Editorials"
-                            >
-                              <svg
-                                className="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                                />
-                              </svg>
-                            </button>
-                            <button
-                              onClick={() => handleView(question._id)}
-                              className="p-3 text-slate-400 hover:text-blue-400 hover:bg-blue-400/10 rounded-xl border border-transparent hover:border-blue-400/20 transition-all duration-200 group relative"
-                              title="View Details"
-                            >
-                              <svg
-                                className="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                />
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                />
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                               </svg>
                             </button>
                           </div>
@@ -587,94 +472,54 @@ const Questions = () => {
               </div>
             ) : (
               // Grid View
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 p-6">
+              <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredAndSortedQuestions.map((question, index) => (
                   <div
                     key={question._id}
-                    className="bg-slate-700/30 rounded-2xl p-6 border border-slate-600 hover:border-slate-500 transition-all duration-300 hover:transform hover:-translate-y-2 hover:shadow-2xl group"
+                    className="bg-slate-800/50 rounded-xl p-4 border border-slate-700 hover:border-slate-600 transition-all group"
                   >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-gradient-to-br from-slate-600 to-slate-700 rounded-lg flex items-center justify-center text-slate-300 font-bold text-sm">
-                          {index + 1}
-                        </div>
-                      </div>
+                    <div className="flex items-start justify-between mb-3">
                       <span
-                        className={`px-3 py-1 rounded-lg text-xs font-bold border ${getDifficultyColor(
+                        className={`px-2 py-1 text-xs font-medium rounded-full ${getDifficultyColor(
                           question.difficulty
                         )}`}
                       >
                         {question.difficulty}
                       </span>
+                      <span className="text-xs text-slate-500">#{index + 1}</span>
                     </div>
-
-                    <h3 className="text-white font-bold text-lg mb-3 line-clamp-2 group-hover:text-blue-300 transition-colors duration-200">
+                    <h3 className="text-white font-medium mb-2 line-clamp-2 group-hover:text-blue-300 transition-colors">
                       {question.title}
                     </h3>
-
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {question.tags?.slice(0, 3).map((tag, tagIndex) => (
+                    <div className="flex flex-wrap gap-1 mb-4">
+                      {question.tags?.slice(0, 3).map((tag, i) => (
                         <span
-                          key={tagIndex}
-                          className="px-3 py-1 bg-gradient-to-r from-blue-500/10 to-purple-500/10 text-blue-300 rounded-lg text-xs font-semibold border border-blue-400/20"
+                          key={i}
+                          className="px-2 py-0.5 text-xs text-slate-400 bg-slate-700 rounded"
                         >
                           {tag}
                         </span>
                       ))}
                     </div>
-
-                    <div className="flex items-center justify-between pt-4 border-t border-slate-600">
-                      <div className="text-slate-400 text-sm flex items-center gap-2">
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                          />
-                        </svg>
-                        {new Date(question.createdAt).toLocaleDateString()}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button className="p-2 text-slate-400 hover:text-amber-400 hover:bg-amber-400/10 rounded-lg transition-all duration-200">
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                            />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => openDeleteModal(question)}
-                          className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all duration-200"
-                        >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
-                          </svg>
-                        </button>
-                      </div>
+                    <div className="flex items-center gap-2 pt-3 border-t border-slate-700">
+                      <button
+                        onClick={() => handleView(question._id)}
+                        className="flex-1 py-2 text-xs text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
+                      >
+                        View
+                      </button>
+                      <button
+                        onClick={() => navigate(`/admin/questions/update/${question._id}`)}
+                        className="flex-1 py-2 text-xs text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 rounded-lg transition-colors"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => openDeleteModal(question)}
+                        className="flex-1 py-2 text-xs text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors"
+                      >
+                        Delete
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -682,13 +527,12 @@ const Questions = () => {
             )}
           </div>
         )}
-
         {/* Empty State */}
         {!loading && filteredAndSortedQuestions.length === 0 && (
-          <div className="flex flex-col items-center justify-center min-h-96 bg-slate-800/30 rounded-2xl border border-slate-700/50 text-center p-12">
-            <div className="w-24 h-24 bg-slate-700 rounded-2xl flex items-center justify-center mb-6">
+          <div className="flex flex-col items-center justify-center py-16 bg-slate-900/50 rounded-xl border border-slate-800 text-center">
+            <div className="w-16 h-16 bg-slate-800 rounded-xl flex items-center justify-center mb-4">
               <svg
-                className="w-12 h-12 text-slate-400"
+                className="w-8 h-8 text-slate-500"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -701,18 +545,18 @@ const Questions = () => {
                 />
               </svg>
             </div>
-            <h3 className="text-2xl font-bold text-white mb-3">
+            <h3 className="text-lg font-semibold text-white mb-2">
               No questions found
             </h3>
-            <p className="text-slate-400 text-lg mb-6 max-w-md">
+            <p className="text-slate-400 text-sm mb-4 max-w-sm">
               {filters.search || filters.difficulty
-                ? "No questions match your current filters. Try adjusting your search criteria."
-                : "Ready to create your first coding challenge? Start building your question bank now."}
+                ? "Try adjusting your filters"
+                : "Start by creating your first question"}
             </p>
             <Link to="/admin/questions/create">
-              <button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-8 py-3.5 rounded-xl font-semibold transition-all duration-300 flex items-center gap-3 shadow-xl hover:shadow-2xl transform hover:-translate-y-0.5">
+              <button className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
                 <svg
-                  className="w-5 h-5"
+                  className="w-4 h-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -724,7 +568,7 @@ const Questions = () => {
                     d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                   />
                 </svg>
-                <span>Create Your First Question</span>
+                Create Question
               </button>
             </Link>
           </div>

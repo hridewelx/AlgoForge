@@ -1,393 +1,251 @@
-import { NavLink } from "react-router-dom";
-import { useState } from "react";
+import { NavLink, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
+import {
+  LayoutDashboard,
+  FileQuestion,
+  Users,
+  BarChart3,
+  Settings,
+  Plus,
+  List,
+  Pencil,
+  Trash2,
+  FileText,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Shield,
+  Zap,
+  Home,
+} from "lucide-react";
 
-const AdminSidebar = () => {
-  const [collapsed, setCollapsed] = useState(false);
+const AdminSidebar = ({ isOpen, onClose, collapsed, setCollapsed }) => {
+  const location = useLocation();
+  const { user } = useSelector((state) => state.authentication);
 
-  const navItems = [
+  const mainNavItems = [
     {
       path: "/admin",
       label: "Dashboard",
-      icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-          />
-        </svg>
-      ),
+      icon: LayoutDashboard,
+      end: true,
     },
     {
       path: "/admin/questions",
       label: "Questions",
-      icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-      ),
+      icon: FileQuestion,
+      end: true,
     },
     {
       path: "/admin/users",
       label: "Users",
-      icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
-          />
-        </svg>
-      ),
+      icon: Users,
     },
     {
       path: "/admin/analytics",
       label: "Analytics",
-      icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-          />
-        </svg>
-      ),
+      icon: BarChart3,
     },
     {
       path: "/admin/settings",
       label: "Settings",
-      icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-          />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-          />
-        </svg>
-      ),
+      icon: Settings,
     },
   ];
 
   const quickActions = [
     {
-      label: "Add Question",
       path: "/admin/questions/create",
-      icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 4v16m8-8H4"
-          />
-        </svg>
-      ),
+      label: "Add Question",
+      icon: Plus,
     },
     {
-      label: "View Questions",
       path: "/admin/questions",
-      icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-          />
-        </svg>
-      ),
-    },
-    {
-      label: "Update Questions",
-      path: "/admin/questions/update",
-      icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-          />
-        </svg>
-      ),
-    },
-    {
-      label: "Delete Questions",
-      path: "/admin/questions/delete",
-      icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-          />
-        </svg>
-      )
-    },
-    {
-      label: "View Reports",
-      path: "/admin/analytics",
-      icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 17v-6m4 6V7m4 10V9M3 3v18h18"
-          />
-        </svg>
-      ),
-    },
-    {
-      label: "System Health",
-      path: "/admin/settings",
-      icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-          />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-          />
-        </svg>
-      ),
+      label: "View All",
+      icon: List,
     },
   ];
 
+  const isActivePath = (path, end = false) => {
+    if (end) {
+      return location.pathname === path;
+    }
+    return location.pathname.startsWith(path);
+  };
+
   return (
-    <div
-      className={`bg-gradient-to-b from-slate-800 to-slate-900 text-slate-200 transition-all duration-300 ${
-        collapsed ? "w-20" : "w-64"
-      } relative`}
-    >
-      {/* Header with Toggle */}
-      <div className="p-6 border-b border-slate-700">
-        <div className="flex items-center justify-between">
+    <>
+      {/* Sidebar Container */}
+      <aside
+        className={`fixed top-0 left-0 z-50 h-full bg-slate-900 border-r border-slate-800 transition-all duration-300 ease-in-out flex flex-col
+          ${isOpen ? "translate-x-0" : "-translate-x-full"} 
+          lg:translate-x-0
+          ${collapsed ? "lg:w-20" : "lg:w-72"}
+          w-72
+        `}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between h-16 px-4 border-b border-slate-800">
           {!collapsed && (
-            <div>
-              <h1 className="text-xl font-bold text-white">Admin Panel</h1>
-              <p className="text-xs text-slate-400 mt-1">Management Console</p>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/25">
+                <Shield className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-white">Admin</h1>
+                <p className="text-[10px] text-slate-500 uppercase tracking-wider">Control Panel</p>
+              </div>
             </div>
           )}
+          
+          {collapsed && (
+            <div className="w-full flex justify-center">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center">
+                <Shield className="w-5 h-5 text-white" />
+              </div>
+            </div>
+          )}
+
+          {/* Mobile close button */}
+          <button
+            onClick={onClose}
+            className="lg:hidden p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          {/* Desktop collapse button */}
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="border p-2 hover:bg-slate-700 rounded-lg transition-colors duration-200 text-slate-400 hover:text-white"
+            className="hidden lg:flex p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={3}
-                d={
-                  collapsed
-                    ? "M13 5l7 7-7 7M5 5l7 7-7 7"
-                    : "M11 19l-7-7 7-7m8 14l-7-7 7-7"
-                }
-              />
-            </svg>
+            {collapsed ? (
+              <ChevronRight className="w-4 h-4" />
+            ) : (
+              <ChevronLeft className="w-4 h-4" />
+            )}
           </button>
         </div>
-      </div>
 
-      {/* Main Navigation */}
-      <nav className="mt-6">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            end={item.path === "/admin"} 
-            className={({ isActive }) =>
-              `flex items-center px-6 py-3 text-sm font-medium transition-all duration-200 group ${
-                isActive
-                  ? "bg-blue-600/20 text-white border-r-5 border-blue-500 shadow-lg"
-                  : "text-slate-400 hover:text-white hover:bg-slate-700/50"
-              } ${collapsed ? "justify-center px-3" : ""}`
-            }
-            title={item.label ?? ""}
-          >
-            <div
-              className={`transition-colors duration-200 ${
-                collapsed ? "" : "mr-3"
-              }`}
-            >
-              {item.icon}
-            </div>
-            {!collapsed && (
-              <span className="transition-opacity duration-200">
-                {item.label}
-              </span>
-            )}
-            {!collapsed && (
-              <svg
-                className="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
+        {/* User Info (when expanded) */}
+        {!collapsed && (
+          <div className="px-4 py-4 border-b border-slate-800">
+            <div className="flex items-center gap-3">
+              {user?.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt={`${user?.firstName || 'User'}'s avatar`}
+                  className="w-10 h-10 rounded-full object-cover ring-2 ring-slate-700"
                 />
-              </svg>
-            )}
-          </NavLink>
-        ))}
-      </nav>
-
-      {/* Quick Actions Section */}
-      {!collapsed && (
-        <div className="mt-8 px-6">
-          <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
-            Quick Actions
-          </h3>
-          <div className="space-y-2">
-            {quickActions.map((action, index) => (
-              <NavLink
-                key={index}
-                to={action.path}
-                className="flex items-center px-3 py-2 text-xs text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-md transition-all duration-200 group"
-              >
-                <span className="mr-2 text-sm">{action.icon}</span>
-                <span className="flex-1 text-left">{action.label}</span>
-                <svg className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </NavLink>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* System Status */}
-      {!collapsed && (
-        <div className="mt-8 px-6">
-          <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
-            System Status
-          </h3>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-400">API</span>
-              <span className="text-green-400 flex items-center">
-                <div className="w-2 h-2 bg-green-400 rounded-full mr-1"></div>
-                Online
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-400">Database</span>
-              <span className="text-green-400 flex items-center">
-                <div className="w-2 h-2 bg-green-400 rounded-full mr-1"></div>
-                Stable
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-400">Users Online</span>
-              <span className="text-blue-400">24</span>
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm ring-2 ring-slate-700">
+                  {(user?.firstName?.[0] || "A").toUpperCase()}{(user?.lastName?.[0] || "").toUpperCase()}
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-white truncate">
+                  {user?.firstName} {user?.lastName}
+                </p>
+                <p className="text-xs text-emerald-400 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                  Administrator
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Footer */}
-      <div
-        className={`absolute bottom-0 left-0 right-0 p-4 border-t border-slate-700 ${
-          collapsed ? "text-center" : ""
-        }`}
-      >
-        {!collapsed ? (
-          <div className="text-xs text-slate-500">
-            <p>Admin Console v1.0</p>
-            <p className="mt-1">© 2024 Your Company</p>
-          </div>
-        ) : (
-          <div className="text-xs text-slate-500">v1.0</div>
         )}
-      </div>
-    </div>
+
+        {/* Main Navigation */}
+        <nav className="flex-1 overflow-y-auto py-4 px-3">
+          {/* Main Menu */}
+          <div className="mb-6">
+            {!collapsed && (
+              <p className="px-3 mb-2 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                Main Menu
+              </p>
+            )}
+            <ul className="space-y-1">
+              {mainNavItems.map((item) => (
+                <li key={item.path}>
+                  <NavLink
+                    to={item.path}
+                    end={item.end}
+                    onClick={onClose}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative
+                      ${
+                        isActivePath(item.path, item.end)
+                          ? "bg-blue-600/20 text-white"
+                          : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                      }
+                      ${collapsed ? "justify-center" : ""}
+                    `}
+                    title={collapsed ? item.label : ""}
+                  >
+                    <item.icon
+                      className={`w-5 h-5 flex-shrink-0 ${
+                        isActivePath(item.path, item.end) ? "text-blue-400" : ""
+                      }`}
+                    />
+                    {!collapsed && (
+                      <span className="flex-1 text-sm font-medium">{item.label}</span>
+                    )}
+                    {isActivePath(item.path, item.end) && (
+                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-blue-500 rounded-r-full" />
+                    )}
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Quick Actions */}
+          {!collapsed && (
+            <div className="mb-6">
+              <p className="px-3 mb-2 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                Quick Actions
+              </p>
+              <ul className="space-y-1">
+                {quickActions.map((action) => (
+                  <li key={action.path + action.label}>
+                    <NavLink
+                      to={action.path}
+                      onClick={onClose}
+                      className="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-lg transition-all duration-200 group"
+                    >
+                      <action.icon className="w-4 h-4" />
+                      <span className="text-sm">{action.label}</span>
+                      <Zap className="w-3 h-3 ml-auto opacity-0 group-hover:opacity-100 text-yellow-400 transition-opacity" />
+                    </NavLink>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </nav>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-slate-800">
+          {!collapsed ? (
+            <NavLink
+              to="/"
+              className="flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors"
+            >
+              <Home className="w-5 h-5" />
+              <span className="text-sm">Back to Site</span>
+            </NavLink>
+          ) : (
+            <NavLink
+              to="/"
+              className="flex items-center justify-center p-2.5 text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors"
+              title="Back to Site"
+            >
+              <Home className="w-5 h-5" />
+            </NavLink>
+          )}
+        </div>
+      </aside>
+    </>
   );
 };
 

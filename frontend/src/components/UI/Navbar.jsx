@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { toast, Toaster } from "react-hot-toast";
-import { userLogout, checkAuthenticatedUser } from "../../authenticationSlicer";
-import axiosClient from "../../utilities/axiosClient";
+import { userLogout, checkAuthenticatedUser, fetchUserAvatar, setAvatar } from "../../authenticationSlicer";
+import { useTheme } from "../../contexts/ThemeContext.tsx";
 import {
   User,
   Settings,
@@ -15,6 +15,9 @@ import {
   Code2,
   BookOpen,
   Home,
+  Sun,
+  Moon,
+  Monitor,
 } from "lucide-react";
 
 const Navbar = () => {
@@ -23,27 +26,23 @@ const Navbar = () => {
   const location = useLocation();
   const dropdownRef = useRef(null);
   const mobileMenuRef = useRef(null);
+  const themeDropdownRef = useRef(null);
 
-  const { user, isAuthenticated } = useSelector((state) => state.authentication);
+  const { user, isAuthenticated, avatar, avatarFetched } = useSelector((state) => state.authentication);
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [avatar, setAvatar] = useState("");
+  const [showThemeMenu, setShowThemeMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  // Fetch user profile for avatar
+  const isDark = resolvedTheme === 'dark';
+
+  // Fetch user avatar from global store if not already fetched
   useEffect(() => {
-    const fetchAvatar = async () => {
-      if (isAuthenticated) {
-        try {
-          const response = await axiosClient.get("/profile/getprofile");
-          setAvatar(response.data.user?.avatar || "");
-        } catch (error) {
-          console.error("Error fetching avatar:", error);
-        }
-      }
-    };
-    fetchAvatar();
-  }, [isAuthenticated]);
+    if (isAuthenticated && !avatarFetched) {
+      dispatch(fetchUserAvatar());
+    }
+  }, [isAuthenticated, avatarFetched, dispatch]);
 
   // Check auth on mount
   useEffect(() => {
@@ -69,6 +68,9 @@ const Navbar = () => {
       }
       if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target)) {
         setShowMobileMenu(false);
+      }
+      if (themeDropdownRef.current && !themeDropdownRef.current.contains(event.target)) {
+        setShowThemeMenu(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -101,6 +103,20 @@ const Navbar = () => {
     { to: "/courses", label: "Courses", icon: BookOpen },
   ];
 
+  const themeOptions = [
+    { value: 'light', label: 'Light', icon: Sun },
+    { value: 'dark', label: 'Dark', icon: Moon },
+    { value: 'system', label: 'System', icon: Monitor },
+  ];
+
+  const getThemeIcon = () => {
+    if (theme === 'system') return Monitor;
+    if (theme === 'dark') return Moon;
+    return Sun;
+  };
+
+  const ThemeIcon = getThemeIcon();
+
   const isActivePath = (path) => {
     if (path === "/") return location.pathname === "/";
     return location.pathname.startsWith(path);
@@ -123,8 +139,12 @@ const Navbar = () => {
       <nav
         className={`sticky top-0 z-50 transition-all duration-300 ${
           scrolled
-            ? "bg-slate-950/95 backdrop-blur-xl shadow-lg shadow-black/20 border-b border-slate-800/50"
-            : "bg-slate-950/70 backdrop-blur-md border-b border-white/5"
+            ? isDark
+              ? "bg-slate-950/95 backdrop-blur-xl shadow-lg shadow-black/20 border-b border-slate-800/50"
+              : "bg-white/95 backdrop-blur-xl shadow-lg shadow-black/5 border-b border-slate-200"
+            : isDark
+              ? "bg-slate-950/70 backdrop-blur-md border-b border-white/5"
+              : "bg-white/70 backdrop-blur-md border-b border-slate-200/50"
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
@@ -149,7 +169,7 @@ const Navbar = () => {
                 </div>
                 <div className="absolute inset-0 w-9 h-9 rounded-xl bg-blue-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </div>
-              <span className="text-xl font-bold text-white tracking-tight hidden sm:block">
+              <span className={`text-xl font-bold tracking-tight hidden sm:block ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 AlgoForge
               </span>
             </NavLink>
@@ -162,8 +182,12 @@ const Navbar = () => {
                   to={link.to}
                   className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                     isActivePath(link.to)
-                      ? "text-white bg-white/10"
-                      : "text-slate-400 hover:text-white hover:bg-white/5"
+                      ? isDark
+                        ? "text-white bg-white/10"
+                        : "text-slate-900 bg-slate-100"
+                      : isDark
+                        ? "text-slate-400 hover:text-white hover:bg-white/5"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                   }`}
                 >
                   <span className="flex items-center gap-2">
@@ -179,12 +203,61 @@ const Navbar = () => {
 
             {/* Right Section */}
             <div className="flex items-center gap-3">
+              {/* Theme Toggle */}
+              <div className="relative" ref={themeDropdownRef}>
+                <button
+                  onClick={() => setShowThemeMenu(!showThemeMenu)}
+                  className={`p-2 rounded-lg transition-all duration-200 ${
+                    isDark
+                      ? "text-slate-400 hover:text-white hover:bg-white/10"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                  }`}
+                  title="Change theme"
+                >
+                  <ThemeIcon className="w-5 h-5" />
+                </button>
+
+                {/* Theme Dropdown */}
+                {showThemeMenu && (
+                  <div className={`absolute right-0 mt-2 w-36 py-1 rounded-xl border shadow-xl animate-in fade-in slide-in-from-top-2 duration-200 ${
+                    isDark
+                      ? "bg-slate-900/95 backdrop-blur-xl border-slate-800"
+                      : "bg-white border-slate-200"
+                  }`}>
+                    {themeOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => {
+                          setTheme(option.value);
+                          setShowThemeMenu(false);
+                        }}
+                        className={`flex items-center gap-3 w-full px-3 py-2 text-sm transition-colors ${
+                          theme === option.value
+                            ? isDark
+                              ? "text-cyan-400 bg-cyan-500/10"
+                              : "text-blue-600 bg-blue-50"
+                            : isDark
+                              ? "text-slate-300 hover:text-white hover:bg-white/5"
+                              : "text-slate-700 hover:text-slate-900 hover:bg-slate-100"
+                        }`}
+                      >
+                        <option.icon className="w-4 h-4" />
+                        {option.label}
+                        {theme === option.value && (
+                          <span className={`ml-auto w-1.5 h-1.5 rounded-full ${isDark ? 'bg-cyan-400' : 'bg-blue-600'}`} />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {isAuthenticated ? (
                 /* User Avatar Dropdown */
                 <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setShowDropdown(!showDropdown)}
-                    className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-white/5 transition-all duration-200 group"
+                    className={`flex items-center gap-2 p-1.5 rounded-xl transition-all duration-200 group ${isDark ? 'hover:bg-white/5' : 'hover:bg-slate-100'}`}
                   >
                     {/* Avatar */}
                     <div className="relative">
@@ -192,20 +265,20 @@ const Navbar = () => {
                         <img
                           src={avatar}
                           alt={user?.firstName || "User"}
-                          className="w-9 h-9 rounded-full object-cover ring-2 ring-slate-700 group-hover:ring-blue-500/50 transition-all duration-200"
+                          className={`w-9 h-9 rounded-full object-cover ring-2 group-hover:ring-blue-500/50 transition-all duration-200 ${isDark ? 'ring-slate-700' : 'ring-slate-300'}`}
                         />
                       ) : (
-                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-bold ring-2 ring-slate-700 group-hover:ring-blue-500/50 transition-all duration-200">
+                        <div className={`w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-bold ring-2 group-hover:ring-blue-500/50 transition-all duration-200 ${isDark ? 'ring-slate-700' : 'ring-slate-300'}`}>
                           {getInitials()}
                         </div>
                       )}
                       {/* Online indicator */}
-                      <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full ring-2 ring-slate-950" />
+                      <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full ring-2 ${isDark ? 'ring-slate-950' : 'ring-white'}`} />
                     </div>
 
                     {/* Name & Arrow (Desktop only) */}
                     <div className="hidden sm:flex items-center gap-1">
-                      <span className="text-sm font-medium text-slate-300 group-hover:text-white transition-colors max-w-[100px] truncate">
+                      <span className={`text-sm font-medium transition-colors max-w-[100px] truncate ${isDark ? 'text-slate-300 group-hover:text-white' : 'text-slate-700 group-hover:text-slate-900'}`}>
                         {user?.firstName || "User"}
                       </span>
                       <ChevronDown
@@ -218,9 +291,9 @@ const Navbar = () => {
 
                   {/* Dropdown Menu */}
                   {showDropdown && (
-                    <div className="absolute right-0 mt-2 w-64 py-2 bg-slate-900/95 backdrop-blur-xl rounded-xl border border-slate-800 shadow-2xl shadow-black/50 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className={`absolute right-0 mt-2 w-64 py-2 backdrop-blur-xl rounded-xl border shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200 ${isDark ? 'bg-slate-900/95 border-slate-800 shadow-black/50' : 'bg-white border-slate-200 shadow-black/10'}`}>
                       {/* User Info Header */}
-                      <div className="px-4 py-3 border-b border-slate-800">
+                      <div className={`px-4 py-3 border-b ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
                         <div className="flex items-center gap-3">
                           {avatar ? (
                             <img
@@ -234,7 +307,7 @@ const Navbar = () => {
                             </div>
                           )}
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-white truncate">
+                            <p className={`text-sm font-semibold truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>
                               {user?.firstName} {user?.lastName}
                             </p>
                             <p className="text-xs text-slate-500 truncate">
@@ -249,7 +322,7 @@ const Navbar = () => {
                         <NavLink
                           to={user?.username ? `/algoforge/profile/${user.username}` : "/profile"}
                           onClick={() => setShowDropdown(false)}
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                          className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${isDark ? 'text-slate-300 hover:text-white hover:bg-white/5' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
                         >
                           <User className="w-4 h-4" />
                           View Profile
@@ -258,7 +331,7 @@ const Navbar = () => {
                         <NavLink
                           to={user?.username ? `/algoforge/${user.username}/settings` : "/settings"}
                           onClick={() => setShowDropdown(false)}
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                          className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${isDark ? 'text-slate-300 hover:text-white hover:bg-white/5' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
                         >
                           <Settings className="w-4 h-4" />
                           Settings
@@ -269,7 +342,7 @@ const Navbar = () => {
                             to="/admin"
                             target="_blank"
                             onClick={() => setShowDropdown(false)}
-                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+                            className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${isDark ? 'text-slate-300 hover:text-white hover:bg-white/5' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
                           >
                             <Shield className="w-4 h-4" />
                             Admin Panel
@@ -281,7 +354,7 @@ const Navbar = () => {
                       </div>
 
                       {/* Logout */}
-                      <div className="pt-2 border-t border-slate-800">
+                      <div className={`pt-2 border-t ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
                         <button
                           onClick={handleLogout}
                           className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
@@ -298,7 +371,7 @@ const Navbar = () => {
                 <div className="flex items-center gap-2">
                   <NavLink
                     to={getAuthLink("/login")}
-                    className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white transition-colors"
+                    className={`px-4 py-2 text-sm font-medium transition-colors ${isDark ? 'text-slate-300 hover:text-white' : 'text-slate-600 hover:text-slate-900'}`}
                   >
                     Sign In
                   </NavLink>
@@ -314,7 +387,7 @@ const Navbar = () => {
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
-                className="md:hidden p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+                className={`md:hidden p-2 rounded-lg transition-colors ${isDark ? 'text-slate-400 hover:text-white hover:bg-white/5' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
               >
                 {showMobileMenu ? (
                   <X className="w-5 h-5" />
@@ -330,8 +403,33 @@ const Navbar = () => {
         {showMobileMenu && (
           <div
             ref={mobileMenuRef}
-            className="md:hidden border-t border-slate-800 bg-slate-950/95 backdrop-blur-xl animate-in slide-in-from-top duration-200"
+            className={`md:hidden border-t backdrop-blur-xl animate-in slide-in-from-top duration-200 ${isDark ? 'border-slate-800 bg-slate-950/95' : 'border-slate-200 bg-white/95'}`}
           >
+            {/* Theme Options in Mobile */}
+            <div className={`px-4 py-3 border-b ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
+              <p className={`text-xs font-medium mb-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Theme</p>
+              <div className="flex gap-2">
+                {themeOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setTheme(option.value)}
+                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      theme === option.value
+                        ? isDark
+                          ? 'bg-cyan-500/20 text-cyan-400'
+                          : 'bg-blue-50 text-blue-600'
+                        : isDark
+                          ? 'bg-slate-800 text-slate-400 hover:text-white'
+                          : 'bg-slate-100 text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <option.icon className="w-4 h-4" />
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="px-4 py-4 space-y-1">
               {navLinks.map((link) => (
                 <NavLink
@@ -340,8 +438,12 @@ const Navbar = () => {
                   onClick={() => setShowMobileMenu(false)}
                   className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                     isActivePath(link.to)
-                      ? "text-white bg-white/10"
-                      : "text-slate-400 hover:text-white hover:bg-white/5"
+                      ? isDark
+                        ? 'text-white bg-white/10'
+                        : 'text-slate-900 bg-slate-100'
+                      : isDark
+                        ? 'text-slate-400 hover:text-white hover:bg-white/5'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
                   <link.icon className="w-5 h-5" />
@@ -351,11 +453,11 @@ const Navbar = () => {
             </div>
 
             {isAuthenticated && (
-              <div className="px-4 py-4 border-t border-slate-800 space-y-1">
+              <div className={`px-4 py-4 border-t space-y-1 ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
                 <NavLink
                   to={user?.username ? `/algoforge/profile/${user.username}` : "/profile"}
                   onClick={() => setShowMobileMenu(false)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${isDark ? 'text-slate-400 hover:text-white hover:bg-white/5' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
                 >
                   <User className="w-5 h-5" />
                   Profile
@@ -363,7 +465,7 @@ const Navbar = () => {
                 <NavLink
                   to={user?.username ? `/algoforge/${user.username}/settings` : "/settings"}
                   onClick={() => setShowMobileMenu(false)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${isDark ? 'text-slate-400 hover:text-white hover:bg-white/5' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
                 >
                   <Settings className="w-5 h-5" />
                   Settings

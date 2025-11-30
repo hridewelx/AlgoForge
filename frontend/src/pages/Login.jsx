@@ -6,6 +6,7 @@ import { toast, Toaster } from "react-hot-toast";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { userLogin } from "../authenticationSlicer";
+import { useTheme } from "../contexts/ThemeContext";
 
 const loginSchema = z.object({
   identifier: z.string().min(1, "Email or Username is required").trim(),
@@ -13,6 +14,7 @@ const loginSchema = z.object({
 });
 
 const LoginPage = () => {
+  const { isDark } = useTheme();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [isLoading, setIsLoading] = useState(false);
@@ -63,15 +65,15 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className={`min-h-screen ${isDark ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' : 'bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100'} flex flex-col justify-center py-12 sm:px-6 lg:px-8`}>
       <Toaster
         position="top-right"
         toastOptions={{
           duration: 2500,
           style: {
-            background: "#1e293b",
-            color: "#f1f5f9",
-            border: "1px solid #475569",
+            background: isDark ? "#1e293b" : "#ffffff",
+            color: isDark ? "#f1f5f9" : "#1e293b",
+            border: isDark ? "1px solid #475569" : "1px solid #e2e8f0",
           },
         }}
       />
@@ -94,28 +96,28 @@ const LoginPage = () => {
                 />
               </svg>
             </div>
-            <span className="ml-2 text-3xl font-bold text-white">
+            <span className={`ml-2 text-3xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
               AlgoForge
             </span>
           </div>
         </div>
-        <h2 className="mt-6 text-center text-2xl font-bold text-white">
+        <h2 className={`mt-6 text-center text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
           Welcome Back
         </h2>
-        <p className="mt-2 text-center text-sm text-slate-400 max-w-md mx-auto font-semibold">
+        <p className={`mt-2 text-center text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'} max-w-md mx-auto font-semibold`}>
           Continue your coding journey with thousands of hands-on tutorials,
           real-world challenges, and a thriving community of developers and
           problem solvers.
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-lg border border-slate-600 shadow-xl shadow-black/50">
-        <div className="bg-slate-800/70 backdrop-blur-sm py-8 px-6 shadow-2xl shadow-black/30 sm:rounded-xl sm:px-10 border border-slate-700/50">
+      <div className={`mt-8 sm:mx-auto sm:w-full sm:max-w-lg border ${isDark ? 'border-slate-600 shadow-black/50' : 'border-slate-200 shadow-slate-300/50'} shadow-xl`}>
+        <div className={`${isDark ? 'bg-slate-800/70 border-slate-700/50' : 'bg-white border-slate-200'} backdrop-blur-sm py-8 px-6 shadow-2xl shadow-black/30 sm:rounded-xl sm:px-10 border`}>
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <div>
               <label
                 htmlFor="identifier"
-                className="block text-sm font-medium text-slate-300 mb-2"
+                className={`block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'} mb-2`}
               >
                 Email or Username
               </label>
@@ -125,7 +127,7 @@ const LoginPage = () => {
                   type="text"
                   autoComplete="username"
                   {...register("identifier")}
-                  className="appearance-none block w-full px-4 py-3 border border-slate-600 rounded-lg shadow-sm placeholder-slate-500 bg-slate-700/50 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 sm:text-sm"
+                  className={`appearance-none block w-full px-4 py-3 border ${isDark ? 'border-slate-600 bg-slate-700/50 text-white placeholder-slate-500' : 'border-slate-300 bg-white text-slate-900 placeholder-slate-400'} rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 sm:text-sm`}
                   placeholder="Username or email"
                 />
                 {errors.identifier && (
@@ -154,7 +156,7 @@ const LoginPage = () => {
               <div className="flex items-center justify-between mb-2">
                 <label
                   htmlFor="password"
-                  className="block text-sm font-medium text-slate-300"
+                  className={`block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}
                 >
                   Password
                 </label>
@@ -173,7 +175,7 @@ const LoginPage = () => {
                   type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   {...register("password")}
-                  className="appearance-none block w-full px-4 py-3 border border-slate-600 rounded-lg shadow-sm placeholder-slate-500 bg-slate-700/50 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 sm:text-sm pr-10"
+                  className={`appearance-none block w-full px-4 py-3 border ${isDark ? 'border-slate-600 bg-slate-700/50 text-white placeholder-slate-500' : 'border-slate-300 bg-white text-slate-900 placeholder-slate-400'} rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 sm:text-sm pr-10`}
                   placeholder="••••••••"
                 />
                 <button
@@ -184,7 +186,7 @@ const LoginPage = () => {
                   {showPassword ? (
                     <svg 
                       xmlns="http://www.w3.org/2000/svg" 
-                      className="h-5 w-5 text-slate-400 hover:text-slate-300 transition-colors duration-200" 
+                      className={`h-5 w-5 ${isDark ? 'text-slate-400 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'} transition-colors duration-200`} 
                       fill="none" 
                       viewBox="0 0 24 24" 
                       stroke="currentColor"
@@ -199,7 +201,7 @@ const LoginPage = () => {
                   ) : (
                     <svg 
                       xmlns="http://www.w3.org/2000/svg" 
-                      className="h-5 w-5 text-slate-400 hover:text-slate-300 transition-colors duration-200" 
+                      className={`h-5 w-5 ${isDark ? 'text-slate-400 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'} transition-colors duration-200`} 
                       fill="none" 
                       viewBox="0 0 24 24" 
                       stroke="currentColor"
@@ -247,11 +249,11 @@ const LoginPage = () => {
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-600 rounded bg-slate-700/50"
+                  className={`h-4 w-4 text-blue-600 focus:ring-blue-500 ${isDark ? 'border-slate-600 bg-slate-700/50' : 'border-slate-300 bg-white'} rounded`}
                 />
                 <label
                   htmlFor="remember-me"
-                  className="ml-2 block text-sm text-slate-400"
+                  className={`ml-2 block text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}
                 >
                   Remember me
                 </label>
@@ -300,7 +302,7 @@ const LoginPage = () => {
               <button
                 type="button"
                 onClick={handleDemoLogin}
-                className="w-full flex justify-center py-3 px-4 border border-slate-600 rounded-lg shadow-sm text-sm font-medium text-slate-300 bg-slate-700/50 hover:bg-slate-600/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+                className={`w-full flex justify-center py-3 px-4 border ${isDark ? 'border-slate-600 text-slate-300 bg-slate-700/50 hover:bg-slate-600/50' : 'border-slate-300 text-slate-700 bg-slate-100 hover:bg-slate-200'} rounded-lg shadow-sm text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200`}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -324,10 +326,10 @@ const LoginPage = () => {
           <div className="mt-8">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-700" />
+                <div className={`w-full border-t ${isDark ? 'border-slate-700' : 'border-slate-200'}`} />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-3 bg-slate-800/70 text-slate-400">
+                <span className={`px-3 ${isDark ? 'bg-slate-800/70 text-slate-400' : 'bg-white text-slate-500'}`}>
                   Or continue with
                 </span>
               </div>
@@ -336,7 +338,7 @@ const LoginPage = () => {
             <div className="mt-6 grid grid-cols-2 gap-4">
               <button
                 type="button"
-                className="w-full inline-flex justify-center items-center py-3 px-4 border border-slate-600 rounded-lg shadow-sm bg-slate-700/50 text-sm font-medium text-slate-300 hover:bg-slate-600/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+                className={`w-full inline-flex justify-center items-center py-3 px-4 border ${isDark ? 'border-slate-600 bg-slate-700/50 text-slate-300 hover:bg-slate-600/50' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'} rounded-lg shadow-sm text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200`}
               >
                 <svg
                   className="w-5 h-5 mr-2"
@@ -351,7 +353,7 @@ const LoginPage = () => {
 
               <button
                 type="button"
-                className="w-full inline-flex justify-center items-center py-3 px-4 border border-slate-600 rounded-lg shadow-sm bg-slate-700/50 text-sm font-medium text-slate-300 hover:bg-slate-600/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+                className={`w-full inline-flex justify-center items-center py-3 px-4 border ${isDark ? 'border-slate-600 bg-slate-700/50 text-slate-300 hover:bg-slate-600/50' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'} rounded-lg shadow-sm text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200`}
               >
                 <svg
                   className="w-5 h-5 mr-2"
@@ -371,7 +373,7 @@ const LoginPage = () => {
           </div>
 
           <div className="mt-8 text-center">
-            <p className="text-sm text-slate-400">
+            <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
               Don't have an account?{" "}
               <Link
                 to="/signup"
@@ -383,11 +385,11 @@ const LoginPage = () => {
           </div>
 
           {/* Features Section */}
-          <div className="mt-8 pt-6 border-t border-slate-700">
-            <h3 className="text-sm font-medium text-slate-300 text-center mb-4">
+          <div className={`mt-8 pt-6 border-t ${isDark ? 'border-slate-700' : 'border-slate-200'}`}>
+            <h3 className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'} text-center mb-4`}>
               Why join AlgoForge?
             </h3>
-            <div className="grid grid-cols-2 gap-4 text-xs text-slate-400">
+            <div className={`grid grid-cols-2 gap-4 text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
               <div className="flex items-center">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

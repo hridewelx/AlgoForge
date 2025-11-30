@@ -1,4 +1,4 @@
-export { default as Header } from "./Header";
+export { default as Header } from "./HeaderNew";
 export { default as ProblemDescription } from "./ProblemDescription";
 export { default as ProblemSubmissions } from "./SubmissionsTab";
 export { default as CodeEditor } from "./CodeEditor";
@@ -12,3 +12,6 @@ export { default as LoadingSpinner } from "./LoadingSpinner";
 export { default as ChatAi } from "./ChatAi";
 export { default as EditorialTab } from "./EditorialTab";
 export { default as SolutionsTab } from "./SolutionsTab";
+export { default as MainContent } from "./MainContent";
+export { default as LeftPanel } from "./LeftPanel";
+export { default as RightPanel } from "./RightPanel";

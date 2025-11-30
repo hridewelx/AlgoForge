@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 
-const Footer = () => {
+const Footer = ({ isDark = true }) => {
   const currentYear = new Date().getFullYear();
 
   const footerLinks = {
@@ -64,7 +64,7 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="border-t border-slate-800/50 bg-slate-950">
+    <footer className={`border-t ${isDark ? 'border-slate-800/50 bg-slate-950' : 'border-slate-200 bg-white'}`}>
       {/* Main Footer Content */}
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-16">
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 lg:gap-12">
@@ -87,11 +87,11 @@ const Footer = () => {
                   />
                 </svg>
               </div>
-              <span className="text-xl font-bold text-white">AlgoForge</span>
+              <span className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>AlgoForge</span>
             </NavLink>
 
             {/* Description */}
-            <p className="text-slate-400 text-sm leading-relaxed max-w-xs">
+            <p className={`${isDark ? 'text-slate-400' : 'text-slate-600'} text-sm leading-relaxed max-w-xs`}>
               The definitive platform for coding interview preparation. Master algorithms, ace interviews, and land your dream job.
             </p>
 
@@ -103,7 +103,7 @@ const Footer = () => {
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-lg bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 hover:border-slate-600 flex items-center justify-center text-slate-400 hover:text-white transition-all duration-300"
+                  className={`w-10 h-10 rounded-lg ${isDark ? 'bg-slate-800/50 hover:bg-slate-800 border-slate-700/50 hover:border-slate-600 text-slate-400 hover:text-white' : 'bg-slate-100 hover:bg-slate-200 border-slate-200 hover:border-slate-300 text-slate-500 hover:text-slate-900'} border flex items-center justify-center transition-all duration-300`}
                   aria-label={social.name}
                 >
                   {social.icon}
@@ -114,13 +114,13 @@ const Footer = () => {
 
           {/* Platform Links */}
           <div>
-            <h4 className="text-white font-semibold mb-4">Platform</h4>
+            <h4 className={`${isDark ? 'text-white' : 'text-slate-900'} font-semibold mb-4`}>Platform</h4>
             <ul className="space-y-3">
               {footerLinks.platform.map((link) => (
                 <li key={link.name}>
                   <NavLink
                     to={link.href}
-                    className="text-sm text-slate-400 hover:text-blue-400 transition-colors"
+                    className={`text-sm ${isDark ? 'text-slate-400 hover:text-blue-400' : 'text-slate-600 hover:text-blue-600'} transition-colors`}
                   >
                     {link.name}
                   </NavLink>
@@ -131,13 +131,13 @@ const Footer = () => {
 
           {/* Resources Links */}
           <div>
-            <h4 className="text-white font-semibold mb-4">Resources</h4>
+            <h4 className={`${isDark ? 'text-white' : 'text-slate-900'} font-semibold mb-4`}>Resources</h4>
             <ul className="space-y-3">
               {footerLinks.resources.map((link) => (
                 <li key={link.name}>
                   <NavLink
                     to={link.href}
-                    className="text-sm text-slate-400 hover:text-blue-400 transition-colors"
+                    className={`text-sm ${isDark ? 'text-slate-400 hover:text-blue-400' : 'text-slate-600 hover:text-blue-600'} transition-colors`}
                   >
                     {link.name}
                   </NavLink>
@@ -148,13 +148,13 @@ const Footer = () => {
 
           {/* Company Links */}
           <div>
-            <h4 className="text-white font-semibold mb-4">Company</h4>
+            <h4 className={`${isDark ? 'text-white' : 'text-slate-900'} font-semibold mb-4`}>Company</h4>
             <ul className="space-y-3">
               {footerLinks.company.map((link) => (
                 <li key={link.name}>
                   <NavLink
                     to={link.href}
-                    className="text-sm text-slate-400 hover:text-blue-400 transition-colors"
+                    className={`text-sm ${isDark ? 'text-slate-400 hover:text-blue-400' : 'text-slate-600 hover:text-blue-600'} transition-colors`}
                   >
                     {link.name}
                   </NavLink>
@@ -166,13 +166,13 @@ const Footer = () => {
       </div>
 
       {/* Bottom Bar */}
-      <div className="border-t border-slate-800/50">
+      <div className={`border-t ${isDark ? 'border-slate-800/50' : 'border-slate-200'}`}>
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-slate-500">
+            <p className={`text-sm ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
               © {currentYear} AlgoForge Inc. All rights reserved.
             </p>
-            <p className="text-sm text-slate-500 flex items-center gap-1">
+            <p className={`text-sm ${isDark ? 'text-slate-500' : 'text-slate-500'} flex items-center gap-1`}>
               Made with 
               <svg className="w-4 h-4 text-red-500 fill-red-500" viewBox="0 0 24 24">
                 <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>

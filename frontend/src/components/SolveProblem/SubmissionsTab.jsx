@@ -7,8 +7,10 @@ import {
   FaTools,
   FaFileAlt,
 } from "react-icons/fa";
+import { useTheme } from "../../contexts/ThemeContext";
 
 const ProblemSubmissions = ({ submissions }) => {
+  const { isDark } = useTheme();
   console.log("submissions prop", submissions);
   const [expandedCode, setExpandedCode] = useState(null);
   const [filters, setFilters] = useState({
@@ -141,9 +143,9 @@ const ProblemSubmissions = ({ submissions }) => {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <div className="w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`}>
             <svg
-              className="w-8 h-8 text-slate-400"
+              className={`w-8 h-8 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -156,10 +158,10 @@ const ProblemSubmissions = ({ submissions }) => {
               />
             </svg>
           </div>
-          <h3 className="text-lg font-semibold text-white mb-2">
+          <h3 className={`text-lg font-semibold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
             No Submissions Yet
           </h3>
-          <p className="text-slate-400">Submit your solution to see it here</p>
+          <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>Submit your solution to see it here</p>
         </div>
       </div>
     );
@@ -170,8 +172,8 @@ const ProblemSubmissions = ({ submissions }) => {
       {/* Header with Stats */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h2 className="text-xl font-bold text-white">Your Submissions</h2>
-          <p className="text-slate-400 text-sm">
+          <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Your Submissions</h2>
+          <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
             {filteredSubmissions.length} of {submissions.length} submission
             {submissions.length !== 1 ? "s" : ""}
             {filters.language || filters.status ? " (filtered)" : ""}
@@ -180,14 +182,14 @@ const ProblemSubmissions = ({ submissions }) => {
 
         {/* Quick Stats */}
         <div className="flex items-center space-x-4 mt-2 lg:mt-0">
-          <div className="text-sm text-slate-400">
-            <span className="text-green-400 font-medium">
+          <div className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+            <span className="text-green-500 font-medium">
               {submissions.filter((s) => s.status === "Accepted").length}
             </span>{" "}
             accepted
           </div>
-          <div className="text-sm text-slate-400">
-            <span className="text-red-400 font-medium">
+          <div className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+            <span className="text-red-500 font-medium">
               {submissions.filter((s) => s.status !== "Accepted").length}
             </span>{" "}
             failed
@@ -196,12 +198,12 @@ const ProblemSubmissions = ({ submissions }) => {
       </div>
 
       {/* Filters */}
-      <div className="bg-slate-800/40 backdrop-blur-sm rounded-xl p-4 border border-slate-700">
+      <div className={`backdrop-blur-sm rounded-xl p-4 border ${isDark ? 'bg-slate-800/40 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex flex-col sm:flex-row gap-3 flex-1">
             {/* Language Filter */}
             <select
-              className="bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors duration-200"
+              className={`border rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors duration-200 ${isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-900'}`}
               value={filters.language}
               onChange={(e) =>
                 setFilters((prev) => ({ ...prev, language: e.target.value }))
@@ -209,7 +211,7 @@ const ProblemSubmissions = ({ submissions }) => {
             >
               <option value="">All Languages</option>
               {uniqueLanguages.map((lang) => (
-                <option key={lang} value={lang} className="bg-slate-700">
+                <option key={lang} value={lang}>
                   {lang.toUpperCase()}
                 </option>
               ))}
@@ -217,7 +219,7 @@ const ProblemSubmissions = ({ submissions }) => {
 
             {/* Status Filter */}
             <select
-              className="bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors duration-200"
+              className={`border rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors duration-200 ${isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-900'}`}
               value={filters.status}
               onChange={(e) =>
                 setFilters((prev) => ({ ...prev, status: e.target.value }))
@@ -225,7 +227,7 @@ const ProblemSubmissions = ({ submissions }) => {
             >
               <option value="">All Status</option>
               {uniqueStatuses.map((status) => (
-                <option key={status} value={status} className="bg-slate-700">
+                <option key={status} value={status}>
                   {status}
                 </option>
               ))}
@@ -233,7 +235,7 @@ const ProblemSubmissions = ({ submissions }) => {
 
             {/* Sort By */}
             <select
-              className="bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors duration-200"
+              className={`border rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors duration-200 ${isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-900'}`}
               value={filters.sortBy}
               onChange={(e) =>
                 setFilters((prev) => ({ ...prev, sortBy: e.target.value }))
@@ -248,7 +250,7 @@ const ProblemSubmissions = ({ submissions }) => {
           {(filters.language || filters.status) && (
             <button
               onClick={clearFilters}
-              className="px-3 py-2 bg-slate-600 hover:bg-slate-500 text-white text-sm rounded-lg transition-colors duration-200 whitespace-nowrap"
+              className={`px-3 py-2 text-sm rounded-lg transition-colors duration-200 whitespace-nowrap ${isDark ? 'bg-slate-600 hover:bg-slate-500 text-white' : 'bg-slate-200 hover:bg-slate-300 text-slate-700'}`}
             >
               Clear Filters
             </button>
@@ -259,10 +261,10 @@ const ProblemSubmissions = ({ submissions }) => {
       {/* Submissions List */}
       <div className="space-y-3">
         {filteredSubmissions.length === 0 ? (
-          <div className="text-center py-8 bg-slate-800/30 rounded-xl border border-slate-700">
-            <div className="w-12 h-12 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-3">
+          <div className={`text-center py-8 rounded-xl border ${isDark ? 'bg-slate-800/30 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`}>
               <svg
-                className="w-6 h-6 text-slate-400"
+                className={`w-6 h-6 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -275,16 +277,16 @@ const ProblemSubmissions = ({ submissions }) => {
                 />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-white mb-1">
+            <h3 className={`text-lg font-semibold mb-1 ${isDark ? 'text-white' : 'text-slate-900'}`}>
               No matching submissions
             </h3>
-            <p className="text-slate-400 text-sm">Try adjusting your filters</p>
+            <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Try adjusting your filters</p>
           </div>
         ) : (
           filteredSubmissions.map((submission) => (
             <div
               key={submission._id}
-              className="bg-slate-800/40 backdrop-blur-sm rounded-xl p-4 border border-slate-700 hover:border-slate-600 transition-all duration-200 group"
+              className={`backdrop-blur-sm rounded-xl p-4 border transition-all duration-200 group ${isDark ? 'bg-slate-800/40 border-slate-700 hover:border-slate-600' : 'bg-white border-slate-200 hover:border-slate-300'}`}
             >
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-3 gap-2">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -312,10 +314,10 @@ const ProblemSubmissions = ({ submissions }) => {
                   </span>
                 </div>
 
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-slate-400">
+                <div className={`flex flex-col sm:flex-row sm:items-center gap-2 text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                   <span>{formatDate(submission.createdAt)}</span>
                   <span className="hidden sm:block">•</span>
-                  <span className="text-slate-500">
+                  <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>
                     {formatTimeAgo(submission.createdAt)}
                   </span>
                 </div>
@@ -323,9 +325,9 @@ const ProblemSubmissions = ({ submissions }) => {
 
               {/* Metrics Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm mb-3">
-                <div className="flex items-center space-x-2 bg-slate-700/30 rounded-lg p-2">
+                <div className={`flex items-center space-x-2 rounded-lg p-2 ${isDark ? 'bg-slate-700/30' : 'bg-slate-50'}`}>
                   <svg
-                    className="w-4 h-4 text-slate-400 flex-shrink-0"
+                    className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -338,16 +340,16 @@ const ProblemSubmissions = ({ submissions }) => {
                     />
                   </svg>
                   <div>
-                    <div className="text-slate-300 font-medium">
+                    <div className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
                       {submission.runTime} ms
                     </div>
-                    <div className="text-slate-500 text-xs">Runtime</div>
+                    <div className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Runtime</div>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-2 bg-slate-700/30 rounded-lg p-2">
+                <div className={`flex items-center space-x-2 rounded-lg p-2 ${isDark ? 'bg-slate-700/30' : 'bg-slate-50'}`}>
                   <svg
-                    className="w-4 h-4 text-slate-400 flex-shrink-0"
+                    className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -360,16 +362,16 @@ const ProblemSubmissions = ({ submissions }) => {
                     />
                   </svg>
                   <div>
-                    <div className="text-slate-300 font-medium">
+                    <div className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
                       {submission.memory} KB
                     </div>
-                    <div className="text-slate-500 text-xs">Memory</div>
+                    <div className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Memory</div>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-2 bg-slate-700/30 rounded-lg p-2">
+                <div className={`flex items-center space-x-2 rounded-lg p-2 ${isDark ? 'bg-slate-700/30' : 'bg-slate-50'}`}>
                   <svg
-                    className="w-4 h-4 text-slate-400 flex-shrink-0"
+                    className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -382,19 +384,19 @@ const ProblemSubmissions = ({ submissions }) => {
                     />
                   </svg>
                   <div>
-                    <div className="text-slate-300 font-medium">
+                    <div className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
                       {submission.testCasePassed}/{submission.totalTestCases}
                     </div>
-                    <div className="text-slate-500 text-xs">Test Cases</div>
+                    <div className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Test Cases</div>
                   </div>
                 </div>
               </div>
 
               {/* Code Preview */}
               {submission.code && (
-                <div className="mt-3 p-3 bg-slate-900/50 rounded-lg border border-slate-700">
+                <div className={`mt-3 p-3 rounded-lg border ${isDark ? 'bg-slate-900/50 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-slate-400 text-sm font-medium">
+                    <span className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                       Code Preview
                     </span>
                     <button
@@ -405,7 +407,7 @@ const ProblemSubmissions = ({ submissions }) => {
                             : submission._id
                         )
                       }
-                      className="text-blue-400 hover:text-blue-300 text-sm font-medium flex items-center space-x-1 transition-colors duration-200"
+                      className="text-blue-500 hover:text-blue-400 text-sm font-medium flex items-center space-x-1 transition-colors duration-200"
                     >
                       <span>
                         {expandedCode === submission._id
@@ -429,7 +431,7 @@ const ProblemSubmissions = ({ submissions }) => {
                       </svg>
                     </button>
                   </div>
-                  <pre className="text-slate-300 text-xs overflow-x-auto bg-slate-800/50 p-3 rounded font-mono">
+                  <pre className={`text-xs overflow-x-auto p-3 rounded font-mono ${isDark ? 'text-slate-300 bg-slate-800/50' : 'text-slate-700 bg-white'}`}>
                     {expandedCode === submission._id
                       ? submission.code
                       : `${submission.code

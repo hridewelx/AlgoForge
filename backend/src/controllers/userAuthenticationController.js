@@ -40,9 +40,11 @@ const register = async(req, res) => {
         const reply = {
             _id: user._id,
             firstName: user.firstName,
+            lastName: user.lastName,
             emailId: user.emailId,
             username: user.username,
-            role: user.role
+            role: user.role,
+            avatar: user.avatar
         }
         res.status(200).json({
             user: reply,
@@ -87,9 +89,11 @@ const login = async(req, res) => {
         const reply = {
             _id: user._id,
             firstName: user.firstName,
+            lastName: user.lastName,
             emailId: user.emailId,
             username: user.username,
-            role: user.role
+            role: user.role,
+            avatar: user.avatar
         }
         res.status(200).json({
             user: reply,
@@ -185,7 +189,8 @@ const checkAuthenticatedUser = async(req, res) => {
             lastName: user.lastName,
             emailId: user.emailId,
             username: user.username,
-            role: user.role
+            role: user.role,
+            avatar: user.avatar
         }
         res.status(200).json({
             user: reply,

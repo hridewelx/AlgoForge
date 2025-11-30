@@ -1,55 +1,123 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate, useLocation, NavLink } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { checkAuthenticatedUser, userLogout } from "../../authenticationSlicer";
+import axiosClient from "../../utilities/axiosClient";
+import {
+  Menu,
+  Bell,
+  Search,
+  User,
+  Settings,
+  LogOut,
+  ChevronDown,
+  Home,
+  ExternalLink,
+  UserPlus,
+  CheckCircle,
+  XCircle,
+  RefreshCw,
+} from "lucide-react";
 
-const AdminHeader = () => {
+const AdminHeader = ({ onMenuClick, sidebarCollapsed }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
+  const dropdownRef = useRef(null);
+  const notificationRef = useRef(null);
+  
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
   const { user, isAuthenticated } = useSelector((state) => state.authentication);
 
-  const getAuthLink = (path) => {
-    return `${path}?redirect=${encodeURIComponent(location.pathname + location.search)}`;
-  };
-
+  // Update time every second
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-    
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
-  }, []); 
+  }, []);
 
+  // Check auth
   useEffect(() => {
     if (isAuthenticated && (!user?.firstName || !user?.lastName)) {
       dispatch(checkAuthenticatedUser());
     }
   }, [dispatch, isAuthenticated, user]);
-  
-  const handleLogin = () => {
-    navigate(getAuthLink("/login"));
+
+  // Fetch notifications
+  useEffect(() => {
+    if (isAuthenticated && user?.role === "admin") {
+      fetchNotifications();
+      // Refresh notifications every 30 seconds
+      const interval = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [isAuthenticated, user]);
+
+  const fetchNotifications = async () => {
+    try {
+      setLoadingNotifications(true);
+      const { data } = await axiosClient.get("/admin/notifications");
+      setNotifications(data.notifications || []);
+      setUnreadCount(data.unreadCount || 0);
+    } catch (error) {
+      console.error("Failed to fetch notifications:", error);
+    } finally {
+      setLoadingNotifications(false);
+    }
   };
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowUserMenu(false);
+      }
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleLogout = () => {
     dispatch(userLogout());
+    setShowUserMenu(false);
+    navigate("/");
   };
 
   const getPageTitle = () => {
     const path = location.pathname;
     if (path === "/admin") return "Dashboard";
+    if (path.includes("/admin/questions/create")) return "Create Question";
+    if (path.includes("/admin/questions/update")) return "Update Question";
     if (path.includes("/admin/questions")) return "Question Management";
     if (path.includes("/admin/users")) return "User Management";
+    if (path.includes("/admin/analytics")) return "Analytics";
+    if (path.includes("/admin/settings")) return "Settings";
+    if (path.includes("/admin/editorials")) return "Editorial Management";
     return "Admin Panel";
+  };
+
+  const getBreadcrumbs = () => {
+    const path = location.pathname;
+    const parts = path.split("/").filter(Boolean);
+    return parts.map((part, index) => ({
+      label: part.charAt(0).toUpperCase() + part.slice(1).replace(/-/g, " "),
+      path: "/" + parts.slice(0, index + 1).join("/"),
+      isLast: index === parts.length - 1,
+    }));
   };
 
   const formatTime = (date) => {
     return date.toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
-      second: "2-digit",
       hour12: true,
     });
   };
@@ -59,168 +127,259 @@ const AdminHeader = () => {
       weekday: "short",
       month: "short",
       day: "numeric",
-      year: "numeric",
     });
   };
 
+  const getNotificationIcon = (type) => {
+    switch (type) {
+      case "user_registered":
+        return <UserPlus className="w-4 h-4 text-blue-400" />;
+      case "submission_accepted":
+        return <CheckCircle className="w-4 h-4 text-emerald-400" />;
+      case "submission_failed":
+        return <XCircle className="w-4 h-4 text-red-400" />;
+      default:
+        return <Bell className="w-4 h-4 text-slate-400" />;
+    }
+  };
+
   return (
-    <header className="select-none bg-gradient-to-r from-slate-800 to-slate-900 shadow-lg border-b border-slate-700">
-      <div className="flex items-center justify-between px-6 py-3">
-        {/* Left Section - Page Title & Breadcrumb */}
-        <div className="flex flex-col">
-          <h1 className="text-xl font-bold text-white">{getPageTitle()}</h1>
-          <div className="flex items-center space-x-2 text-sm text-slate-300 mt-1">
-            <span>Admin</span>
-            <span className="text-slate-400 font-bold">›</span>
-            <span>{getPageTitle()}</span>
+    <header className="sticky top-0 z-30 bg-slate-900/95 backdrop-blur-xl border-b border-slate-800">
+      <div className="flex items-center justify-between h-16 px-4 sm:px-6">
+        {/* Left Section */}
+        <div className="flex items-center gap-4">
+          {/* Mobile Menu Button */}
+          <button
+            onClick={onMenuClick}
+            className="lg:hidden p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+
+          {/* Page Title & Breadcrumb */}
+          <div className="hidden sm:block">
+            <h1 className="text-lg font-semibold text-white">{getPageTitle()}</h1>
+            <nav className="flex items-center gap-1 text-xs text-slate-500">
+              {getBreadcrumbs().map((crumb, index) => (
+                <span key={crumb.path} className="flex items-center gap-1">
+                  {index > 0 && <span>/</span>}
+                  {crumb.isLast ? (
+                    <span className="text-slate-400">{crumb.label}</span>
+                  ) : (
+                    <NavLink
+                      to={crumb.path}
+                      className="hover:text-white transition-colors"
+                    >
+                      {crumb.label}
+                    </NavLink>
+                  )}
+                </span>
+              ))}
+            </nav>
           </div>
         </div>
 
-        {/* Right Section - Controls */}
-        <div className="flex items-center space-x-4">
+        {/* Right Section */}
+        <div className="flex items-center gap-2 sm:gap-4">
+          {/* Search (Desktop) */}
+          <div className="hidden md:flex items-center">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-48 lg:w-64 pl-9 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-300 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+              />
+            </div>
+          </div>
+
           {/* Date & Time */}
-          <div className="hidden md:flex flex-col items-end text-right">
+          <div className="hidden lg:flex flex-col items-end text-right px-3 py-1 bg-slate-800/50 rounded-lg">
             <span className="text-sm font-medium text-white">
               {formatTime(currentTime)}
             </span>
-            <span className="text-xs text-slate-300">
+            <span className="text-xs text-slate-400">
               {formatDate(currentTime)}
             </span>
           </div>
 
-          {/* User Menu */}
-          <div className="relative">
+          {/* Notifications */}
+          <div className="relative" ref={notificationRef}>
             <button
-              onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center space-x-3 p-2 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors duration-200"
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="relative p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
             >
-              <div className="flex flex-col items-end text-right">
-                <span className="text-sm font-medium text-white">
-                  {user?.firstName} {user?.lastName}
+              <Bell className="w-5 h-5" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
-                <span className="text-xs text-slate-400 capitalize">
-                  {user?.role}
-                </span>
-              </div>
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold shadow-lg">
-                {(user?.firstName?.[0] ?? "") + (user?.lastName?.[0] ?? "")}
-              </div>
-              <svg
-                className="w-4 h-4 text-slate-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
+              )}
             </button>
 
-            {/* User Menu Dropdown */}
+            {/* Notifications Dropdown */}
+            {showNotifications && (
+              <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden">
+                <div className="px-4 py-3 border-b border-slate-800 flex items-center justify-between">
+                  <h3 className="font-semibold text-white">Notifications</h3>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-400">
+                      {unreadCount} unread
+                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        fetchNotifications();
+                      }}
+                      className="p-1 text-slate-400 hover:text-white rounded transition-colors"
+                      title="Refresh"
+                    >
+                      <RefreshCw className={`w-3 h-3 ${loadingNotifications ? "animate-spin" : ""}`} />
+                    </button>
+                  </div>
+                </div>
+                <div className="max-h-64 overflow-y-auto">
+                  {loadingNotifications && notifications.length === 0 ? (
+                    <div className="px-4 py-8 text-center">
+                      <RefreshCw className="w-5 h-5 text-slate-500 animate-spin mx-auto mb-2" />
+                      <p className="text-sm text-slate-500">Loading...</p>
+                    </div>
+                  ) : notifications.length === 0 ? (
+                    <div className="px-4 py-8 text-center">
+                      <Bell className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+                      <p className="text-sm text-slate-500">No notifications yet</p>
+                      <p className="text-xs text-slate-600 mt-1">Activity will appear here</p>
+                    </div>
+                  ) : (
+                    notifications.map((notification) => (
+                      <div
+                        key={notification.id}
+                        className={`px-4 py-3 hover:bg-slate-800/50 cursor-pointer transition-colors ${
+                          notification.unread ? "bg-blue-500/5" : ""
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0 mt-0.5">
+                            {getNotificationIcon(notification.type)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-slate-300">
+                              {notification.text}
+                            </p>
+                            {notification.subtext && (
+                              <p className="text-xs text-slate-500 truncate">
+                                {notification.subtext}
+                              </p>
+                            )}
+                            <p className="text-xs text-slate-500 mt-1">
+                              {notification.timeAgo}
+                            </p>
+                          </div>
+                          {notification.unread && (
+                            <span className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0" />
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <div className="px-4 py-3 border-t border-slate-800">
+                  <button className="w-full text-center text-sm text-blue-400 hover:text-blue-300 transition-colors">
+                    View all notifications
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* User Menu */}
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="flex items-center gap-2 p-1.5 hover:bg-slate-800 rounded-xl transition-colors"
+            >
+              {user?.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt={`${user?.firstName || 'User'}'s avatar`}
+                  className="w-8 h-8 rounded-full object-cover ring-2 ring-slate-700"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm ring-2 ring-slate-700">
+                  {(user?.firstName?.[0] || "A").toUpperCase()}{(user?.lastName?.[0] || "").toUpperCase()}
+                </div>
+              )}
+              <div className="hidden sm:block text-left">
+                <p className="text-sm font-medium text-white truncate max-w-[100px]">
+                  {user?.firstName}
+                </p>
+                <p className="text-xs text-emerald-400">Admin</p>
+              </div>
+              <ChevronDown
+                className={`hidden sm:block w-4 h-4 text-slate-500 transition-transform ${
+                  showUserMenu ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {/* User Dropdown */}
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-50">
-                <div className="p-4 border-b border-slate-700">
-                  <p className="text-sm text-white font-medium">
+              <div className="absolute right-0 mt-2 w-56 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden">
+                <div className="px-4 py-3 border-b border-slate-800">
+                  <p className="text-sm font-medium text-white">
                     {user?.firstName} {user?.lastName}
                   </p>
+                  <p className="text-xs text-slate-400 truncate">
+                    {user?.emailId}
+                  </p>
                 </div>
-                
-                <div className="p-2" onClick={(e) => e.stopPropagation()}>
-                  <button className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700 rounded-md transition-colors duration-200">
-                    <svg
-                      className="w-4 h-4 flex-shrink-0"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-hidden="true"
-                    >
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                      <circle cx="12" cy="7" r="4" />
-                    </svg>
-                    <span>Profile Settings</span>
-                  </button>
 
-                  <button className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700 rounded-md transition-colors duration-200">
-                    <svg
-                      className="w-4 h-4 flex-shrink-0"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-hidden="true"
-                    >
-                      <path d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7z" />
-                      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06A2 2 0 1 1 4.3 16.9l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09c.7 0 1.26-.44 1.51-1a1.65 1.65 0 0 0-.33-1.82L4.3 6.3A2 2 0 1 1 7.12 3.47l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09c0 .7.44 1.26 1 1.51.64.3 1.31.12 1.82-.33l.06-.06A2 2 0 1 1 19.4 7.12l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.7 0 1.26.44 1.51 1 .09.3.08.62 0 .92z" />
-                    </svg>
-                    <span>Preferences</span>
-                  </button>
+                <div className="py-2">
+                  <NavLink
+                    to={`/algoforge/profile/${user?.username}`}
+                    onClick={() => setShowUserMenu(false)}
+                    className="flex items-center gap-3 px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+                  >
+                    <User className="w-4 h-4" />
+                    View Profile
+                    <ExternalLink className="w-3 h-3 ml-auto" />
+                  </NavLink>
 
-                  {isAuthenticated ? (
-                    <button
-                      onClick={handleLogout}
-                      className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-slate-700 rounded-md transition-colors duration-200"
-                    >
-                      <svg
-                        className="w-4 h-4 flex-shrink-0"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        aria-hidden="true"
-                      >
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                        <path d="M16 17l5-5-5-5" />
-                        <path d="M21 12H9" />
-                      </svg>
-                      <span>Logout</span>
-                    </button>
-                  ) : (
-                    <button
-                      onClick={handleLogin}
-                      className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700 rounded-md transition-colors duration-200"
-                    >
-                      <svg
-                        className="w-4 h-4 flex-shrink-0"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        aria-hidden="true"
-                      >
-                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-                        <polyline points="10 17 15 12 10 7" />
-                        <line x1="15" y1="12" x2="3" y2="12" />
-                      </svg>
-                      <span>Login</span>
-                    </button>
-                  )}
+                  <NavLink
+                    to={`/algoforge/${user?.username}/settings`}
+                    onClick={() => setShowUserMenu(false)}
+                    className="flex items-center gap-3 px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+                  >
+                    <Settings className="w-4 h-4" />
+                    Settings
+                  </NavLink>
+
+                  <NavLink
+                    to="/"
+                    onClick={() => setShowUserMenu(false)}
+                    className="flex items-center gap-3 px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+                  >
+                    <Home className="w-4 h-4" />
+                    Back to Site
+                  </NavLink>
+                </div>
+
+                <div className="py-2 border-t border-slate-800">
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Sign Out
+                  </button>
                 </div>
               </div>
             )}
           </div>
         </div>
       </div>
-
-      {/* Close dropdowns when clicking outside */}
-      {showUserMenu && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setShowUserMenu(false)}
-        />
-      )}
     </header>
   );
 };

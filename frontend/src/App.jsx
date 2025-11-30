@@ -10,6 +10,7 @@ import ProblemSet from "./pages/ProblemSet";
 import SolveProblem from "./pages/SolveProblem";
 import UserProfile from "./pages/UserProfile";
 import Settings from "./pages/Settings";
+import Courses from "./pages/Courses";
 
 // In your main router configuration
 import AdminLayout from "./components/Admin/AdminLayout";
@@ -19,6 +20,9 @@ import { ChatAi } from "./components/SolveProblem";
 import QuestionCreation from "./components/Admin/QuestionCreation";
 import QuestionUpdation from "./components/Admin/QuestionUpdation";
 import EditorialManagement from "./components/Admin/EditorialManagement";
+import UserManagement from "./components/Admin/UserManagement";
+import Analytics from "./components/Admin/Analytics";
+import AdminSettings from "./components/Admin/AdminSettings";
 
 function App() {
   const dispatch = useDispatch();
@@ -39,9 +43,10 @@ function App() {
         {/* <Route path="/signup" element={ isAuthenticated ? <Navigate to="/"></Navigate> : <Signup></Signup> }></Route> */}
         <Route path="/signup" element={<Signup></Signup>}></Route>
         <Route path="/problemset" element={<ProblemSet></ProblemSet>}></Route>
+        <Route path="/courses" element={<Courses />}></Route>
         <Route path="/algoforge/profile/:username" element={<UserProfile></UserProfile>}></Route>
         <Route path="/algoforge/:username/settings" element={<Settings></Settings>}></Route>
-
+        
         <Route
           path="/problem/:problemId"
           element={<SolveProblem></SolveProblem>}
@@ -62,6 +67,9 @@ function App() {
           <Route path="questions/create" element={<QuestionCreation />} />
           <Route path="questions/update/:problemId" element={<QuestionUpdation />} />
           <Route path="editorials/:problemId" element={<EditorialManagement />} />
+          <Route path="users" element={<UserManagement />} />
+          <Route path="analytics" element={<Analytics />} />
+          <Route path="settings" element={<AdminSettings />} />
         </Route>
 
         {/* <Route path="/admin/questions/create" element={<QuestionCreation />} />  */}

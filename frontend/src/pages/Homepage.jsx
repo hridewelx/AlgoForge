@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import axiosClient from "../utilities/axiosClient";
 import Navbar from "../components/UI/Navbar";
+import { useTheme } from "../contexts/ThemeContext";
 import {
   HeroSection,
   FeaturesSection,
@@ -11,6 +12,7 @@ import {
 } from "../components/Landing";
 
 const Homepage = () => {
+  const { isDark } = useTheme();
   const { user, isAuthenticated } = useSelector(
     (state) => state.authentication
   );
@@ -83,14 +85,14 @@ const Homepage = () => {
   }, [isLoading, stats]);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-300 selection:bg-blue-500/30 selection:text-blue-200 overflow-x-hidden">
+    <div className={`min-h-screen ${isDark ? 'bg-slate-950 text-slate-300' : 'bg-slate-50 text-slate-700'} selection:bg-blue-500/30 selection:text-blue-200 overflow-x-hidden`}>
       {/* Global Background Effects */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[150px]" />
-        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[150px]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-500/5 rounded-full blur-[200px]" />
+        <div className={`absolute top-0 left-1/4 w-[500px] h-[500px] ${isDark ? 'bg-blue-500/10' : 'bg-blue-500/5'} rounded-full blur-[150px]`} />
+        <div className={`absolute bottom-0 right-1/4 w-[500px] h-[500px] ${isDark ? 'bg-purple-500/10' : 'bg-purple-500/5'} rounded-full blur-[150px]`} />
+        <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] ${isDark ? 'bg-indigo-500/5' : 'bg-indigo-500/3'} rounded-full blur-[200px]`} />
         {/* Noise texture overlay */}
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPjxwYXRoIGQ9Ik0wIDBoMzAwdjMwMEgweiIgZmlsdGVyPSJ1cmwoI2EpIiBvcGFjaXR5PSIuMDUiLz48L3N2Zz4=')] opacity-50" />
+        <div className={`absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPjxwYXRoIGQ9Ik0wIDBoMzAwdjMwMEgweiIgZmlsdGVyPSJ1cmwoI2EpIiBvcGFjaXR5PSIuMDUiLz48L3N2Zz4=')] ${isDark ? 'opacity-50' : 'opacity-30'}`} />
       </div>
 
       {/* Navigation */}
@@ -98,14 +100,14 @@ const Homepage = () => {
 
       {/* Main Content */}
       <main className="relative z-10">
-        <HeroSection animatedStats={animatedStats} />
-        <FeaturesSection stats={stats} />
-        <CoursesSection />
-        <CTASection />
+        <HeroSection animatedStats={animatedStats} isDark={isDark} />
+        <FeaturesSection stats={stats} isDark={isDark} />
+        <CoursesSection isDark={isDark} />
+        <CTASection isDark={isDark} />
       </main>
 
       {/* Footer */}
-      <Footer />
+      <Footer isDark={isDark} />
 
       {/* Custom CSS for animations */}
       <style>{`

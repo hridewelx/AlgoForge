@@ -2,11 +2,12 @@ const ResizableSplit = ({
   children, 
   direction = "horizontal", 
   onMouseDown,
-  isDragging 
+  isDragging,
+  isDark = true,
 }) => {
   const className = direction === "horizontal" 
-    ? "w-1 bg-slate-700/50 hover:bg-yellow-500 cursor-col-resize flex items-center justify-center transition-colors duration-150 flex-shrink-0"
-    : "h-1 bg-slate-700/50 hover:bg-yellow-500 cursor-row-resize flex items-center justify-center transition-colors duration-150 flex-shrink-0";
+    ? `w-1 ${isDark ? 'bg-slate-700/50' : 'bg-slate-300'} hover:bg-yellow-500 cursor-col-resize flex items-center justify-center transition-colors duration-150 flex-shrink-0`
+    : `h-1 ${isDark ? 'bg-slate-700/50' : 'bg-slate-300'} hover:bg-yellow-500 cursor-row-resize flex items-center justify-center transition-colors duration-150 flex-shrink-0`;
 
   return (
     <div

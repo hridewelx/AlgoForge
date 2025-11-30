@@ -8,13 +8,6 @@ export const userRegistration = createAsyncThunk(
       const response = await axiosClient.post("/user/register", userData);
       return response.data.user;
     } catch (error) {
-      // return rejectWithValue({
-      //   message:
-      //     error.response?.data?.message ||
-      //     error.message ||
-      //     "Registration failed",
-      //   status: error.response?.status,
-      // });
       return rejectWithValue(error);
     }
   }
@@ -25,15 +18,8 @@ export const userLogin = createAsyncThunk(
   async (credentials, { rejectWithValue }) => {
     try {
       const response = await axiosClient.post("/user/login", credentials);
-      // console.log("logincredentials",credentials);
-      // console.log("login response", response);
       return response.data.user;
     } catch (error) {
-      // return rejectWithValue({
-      //   message:
-      //     error.response?.data?.message || error.message || "Login failed",
-      //   status: error.response?.status,
-      // });
       return rejectWithValue(error);
     }
   }
@@ -46,11 +32,6 @@ export const userLogout = createAsyncThunk(
       await axiosClient.post("user/logout");
       return null;
     } catch (error) {
-      // return rejectWithValue({
-      //   message:
-      //     error.response?.data?.message || error.message || "Logout failed",
-      //   status: error.response?.status,
-      // });
       return rejectWithValue(error);
     }
   }
@@ -61,13 +42,26 @@ export const checkAuthenticatedUser = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await axiosClient.get("/user/checkauthentication");
-      // console.log("authentication response", response);
       return response.data.user;
     } catch (error) {
-      // return rejectWithValue({
-      //   message: error.response?.data?.message || error.message || 'Authentication check failed',
-      //   status: error.response?.status
-      // });
+      return rejectWithValue(error);
+    }
+  }
+);
+
+// New thunk to fetch user avatar from profile
+export const fetchUserAvatar = createAsyncThunk(
+  "authentication/fetchAvatar",
+  async (_, { rejectWithValue, getState }) => {
+    try {
+      const { authentication } = getState();
+      // Only fetch if authenticated and avatar not already loaded
+      if (!authentication.isAuthenticated) {
+        return null;
+      }
+      const response = await axiosClient.get("/profile/getprofile");
+      return response.data.user?.avatar || "";
+    } catch (error) {
       return rejectWithValue(error);
     }
   }
@@ -80,8 +74,21 @@ const authenticationSlice = createSlice({
     isAuthenticated: false,
     loading: true,  // Start with true to wait for auth check on page load
     error: null,
+    avatar: "",  // Store avatar in global state
+    avatarLoading: false,
+    avatarFetched: false,  // Track if avatar has been fetched to prevent re-fetching
   },
-  reducers: {},
+  reducers: {
+    // Action to manually update avatar (e.g., after upload)
+    setAvatar: (state, action) => {
+      state.avatar = action.payload;
+      state.avatarFetched = true;
+    },
+    // Action to clear avatar (e.g., after removing avatar)
+    clearAvatar: (state) => {
+      state.avatar = "";
+    },
+  },
   extraReducers: (builder) => {
     builder
       // user registration cases
@@ -127,12 +134,16 @@ const authenticationSlice = createSlice({
         state.loading = false;
         state.isAuthenticated = !!action.payload;
         state.user = action.payload;
+        state.avatar = "";  // Clear avatar on logout
+        state.avatarFetched = false;
       })
       .addCase(userLogout.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.message || "Something went wrong";
         state.isAuthenticated = false;
         state.user = null;
+        state.avatar = "";
+        state.avatarFetched = false;
       })
 
       // check authenticated user cases
@@ -150,8 +161,25 @@ const authenticationSlice = createSlice({
         state.error = action.payload?.message || null;
         state.isAuthenticated = false;
         state.user = null;
+        state.avatar = "";
+        state.avatarFetched = false;
+      })
+
+      // fetch user avatar cases
+      .addCase(fetchUserAvatar.pending, (state) => {
+        state.avatarLoading = true;
+      })
+      .addCase(fetchUserAvatar.fulfilled, (state, action) => {
+        state.avatarLoading = false;
+        state.avatar = action.payload || "";
+        state.avatarFetched = true;
+      })
+      .addCase(fetchUserAvatar.rejected, (state) => {
+        state.avatarLoading = false;
+        state.avatarFetched = true;  // Mark as fetched even on error to prevent retries
       });
   },
 });
 
+export const { setAvatar, clearAvatar } = authenticationSlice.actions;
 export default authenticationSlice.reducer;

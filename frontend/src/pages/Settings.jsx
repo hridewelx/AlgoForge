@@ -3,8 +3,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import axiosClient from "../utilities/axiosClient";
 import { toast, Toaster } from "react-hot-toast";
-import { userLogout } from "../authenticationSlicer";
+import { userLogout, setAvatar as setGlobalAvatar } from "../authenticationSlicer";
 import Navbar from "../components/UI/Navbar";
+import { useTheme } from "../contexts/ThemeContext";
 import {
   BasicInfoTab,
   AccountTab,
@@ -18,6 +19,7 @@ const Settings = () => {
   const dispatch = useDispatch();
   const { username } = useParams();
   const { user, isAuthenticated, loading: authLoading } = useSelector((state) => state.authentication);
+  const { isDark } = useTheme();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("basic");
@@ -160,6 +162,8 @@ const Settings = () => {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setAvatar(response.data.avatar);
+      // Update global Redux state so Navbar reflects the change
+      dispatch(setGlobalAvatar(response.data.avatar));
       toast.success("Profile picture updated successfully");
     } catch (error) {
       console.error("Error uploading avatar:", error);
@@ -180,6 +184,8 @@ const Settings = () => {
     try {
       await axiosClient.delete("/profile/removeavatar");
       setAvatar("");
+      // Update global Redux state so Navbar reflects the change
+      dispatch(setGlobalAvatar(""));
       toast.success("Profile picture removed");
     } catch (error) {
       console.error("Error removing avatar:", error);
@@ -322,14 +328,14 @@ const Settings = () => {
   // Show loading while auth is being checked
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className={`min-h-screen ${isDark ? 'bg-slate-950' : 'bg-slate-100'} flex items-center justify-center`}>
         <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className={`min-h-screen ${isDark ? 'bg-slate-950' : 'bg-slate-100'}`}>
       <Toaster position="top-right" reverseOrder={false} />
       
       {/* Navbar */}
@@ -338,8 +344,8 @@ const Settings = () => {
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Page Title */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-white">Account Settings</h1>
-          <p className="text-slate-400 mt-1">Manage your profile and preferences</p>
+          <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Account Settings</h1>
+          <p className={`${isDark ? 'text-slate-400' : 'text-slate-600'} mt-1`}>Manage your profile and preferences</p>
         </div>
         
         <div className="flex gap-8">
@@ -348,6 +354,7 @@ const Settings = () => {
             activeTab={activeTab}
             setActiveTab={setActiveTab}
             handleLogout={handleLogout}
+            isDark={isDark}
           />
 
           {/* Main Content */}
@@ -364,6 +371,7 @@ const Settings = () => {
                 handleAvatarUpload={handleAvatarUpload}
                 handleRemoveAvatar={handleRemoveAvatar}
                 fileInputRef={fileInputRef}
+                isDark={isDark}
               />
             )}
 
@@ -391,11 +399,12 @@ const Settings = () => {
                 handleAddSecondaryEmail={handleAddSecondaryEmail}
                 handleRemoveSecondaryEmail={handleRemoveSecondaryEmail}
                 handleChangePrimaryEmail={handleChangePrimaryEmail}
+                isDark={isDark}
               />
             )}
 
             {/* Privacy Tab */}
-            {activeTab === "privacy" && <PrivacyTab />}
+            {activeTab === "privacy" && <PrivacyTab isDark={isDark} />}
           </div>
         </div>
       </div>
@@ -408,6 +417,7 @@ const Settings = () => {
         setDeleteConfirmText={setDeleteConfirmText}
         handleDeleteAccount={handleDeleteAccount}
         deleting={deleting}
+        isDark={isDark}
       />
     </div>
   );

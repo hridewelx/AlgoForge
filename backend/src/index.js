@@ -10,6 +10,7 @@ import problemSubmissionRoutes from "./routes/problemSubmissionRoutes.js";
 import chatWithAiRoutes from "./routes/chatWithAiRoutes.js";
 import problemEditorialRoutes from "./routes/problemEditorialRoutes.js";
 import userProfileRoutes from "./routes/userProfileRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 
 const app = express();
 app.use(express.json());
@@ -24,6 +25,7 @@ app.use("/problems", problemRoutes);
 app.use("/editorial", problemEditorialRoutes); 
 app.use("/submissions", problemSubmissionRoutes);
 app.use("/algoforgeai", chatWithAiRoutes);
+app.use("/admin", adminRoutes);
 
 async function connectDatabase() {
     try {

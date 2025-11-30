@@ -4,6 +4,7 @@ import { useSelector } from "react-redux";
 import axiosClient from "../utilities/axiosClient";
 import { toast } from "react-hot-toast";
 import Navbar from "../components/UI/Navbar";
+import { useTheme } from "../contexts/ThemeContext";
 import {
   ProfileCard,
   SkillsSection,
@@ -21,6 +22,7 @@ const UserProfile = () => {
   const { user, isAuthenticated } = useSelector(
     (state) => state.authentication
   );
+  const { isDark } = useTheme();
 
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -75,7 +77,7 @@ const UserProfile = () => {
   };
 
   const getActivityColor = (count) => {
-    if (count === 0) return "bg-slate-800/50";
+    if (count === 0) return isDark ? "bg-slate-800/50" : "bg-slate-200/50";
     if (count === 1) return "bg-emerald-900/70";
     if (count <= 3) return "bg-emerald-700/80";
     if (count <= 5) return "bg-emerald-500";
@@ -84,10 +86,10 @@ const UserProfile = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className={`min-h-screen ${isDark ? 'bg-slate-950' : 'bg-slate-100'} flex items-center justify-center`}>
         <div className="flex flex-col items-center gap-4">
           <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-slate-400 font-medium">Loading profile...</p>
+          <p className={`${isDark ? 'text-slate-400' : 'text-slate-600'} font-medium`}>Loading profile...</p>
         </div>
       </div>
     );
@@ -95,8 +97,8 @@ const UserProfile = () => {
 
   if (!profileData) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <p className="text-slate-400">Failed to load profile data</p>
+      <div className={`min-h-screen ${isDark ? 'bg-slate-950' : 'bg-slate-100'} flex items-center justify-center`}>
+        <p className={`${isDark ? 'text-slate-400' : 'text-slate-600'}`}>Failed to load profile data</p>
       </div>
     );
   }
@@ -104,12 +106,12 @@ const UserProfile = () => {
   const { stats, languageStats, recentAccepted, skills } = profileData;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-300 font-sans selection:bg-blue-500/30">
+    <div className={`min-h-screen ${isDark ? 'bg-slate-950 text-slate-300' : 'bg-slate-100 text-slate-700'} font-sans selection:bg-blue-500/30`}>
       {/* Dynamic Background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-[120px]" />
-        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-emerald-500/5 rounded-full blur-[120px] -translate-x-1/2 -translate-y-1/2" />
+        <div className={`absolute top-0 left-1/4 w-96 h-96 ${isDark ? 'bg-blue-500/5' : 'bg-blue-500/10'} rounded-full blur-[120px]`} />
+        <div className={`absolute bottom-0 right-1/4 w-96 h-96 ${isDark ? 'bg-purple-500/5' : 'bg-purple-500/10'} rounded-full blur-[120px]`} />
+        <div className={`absolute top-1/2 left-1/2 w-96 h-96 ${isDark ? 'bg-emerald-500/5' : 'bg-emerald-500/10'} rounded-full blur-[120px] -translate-x-1/2 -translate-y-1/2`} />
       </div>
       <Navbar />
 
@@ -121,15 +123,16 @@ const UserProfile = () => {
               profileData={profileData}
               stats={stats}
               isOwnProfile={isOwnProfile}
+              isDark={isDark}
             />
-            <SkillsSection skills={skills} />
-            <SolvedProblemsCard stats={stats} />
-            <LanguagesCard languageStats={languageStats} />
+            <SkillsSection skills={skills} isDark={isDark} />
+            <SolvedProblemsCard stats={stats} isDark={isDark} />
+            <LanguagesCard languageStats={languageStats} isDark={isDark} />
           </div>
 
           {/* Right Content */}
           <div className="lg:col-span-8 space-y-6">
-            <BadgesSection stats={stats} languageStats={languageStats} />
+            <BadgesSection stats={stats} languageStats={languageStats} isDark={isDark} />
             <ActivityHeatmap
               stats={stats}
               selectedYear={selectedYear}
@@ -137,9 +140,10 @@ const UserProfile = () => {
               availableYears={availableYears}
               profileData={profileData}
               getActivityColor={getActivityColor}
+              isDark={isDark}
             />
-            <StatsCards stats={stats} />
-            <RecentSubmissions recentAccepted={recentAccepted} />
+            <StatsCards stats={stats} isDark={isDark} />
+            <RecentSubmissions recentAccepted={recentAccepted} isDark={isDark} />
           </div>
         </div>
       </main>

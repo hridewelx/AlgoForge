@@ -10,6 +10,7 @@ import ProblemSet from "./pages/ProblemSet";
 import SolveProblem from "./pages/SolveProblem";
 import UserProfile from "./pages/UserProfile";
 import Settings from "./pages/Settings";
+import DSAVisualizer from "./pages/DSAVisualizer";
 import Courses from "./pages/Courses";
 
 // In your main router configuration
@@ -43,6 +44,7 @@ function App() {
         {/* <Route path="/signup" element={ isAuthenticated ? <Navigate to="/"></Navigate> : <Signup></Signup> }></Route> */}
         <Route path="/signup" element={<Signup></Signup>}></Route>
         <Route path="/problemset" element={<ProblemSet></ProblemSet>}></Route>
+        <Route path="/visualizer" element={<DSAVisualizer />}></Route>
         <Route path="/courses" element={<Courses />}></Route>
         <Route path="/algoforge/profile/:username" element={<UserProfile></UserProfile>}></Route>
         <Route path="/algoforge/:username/settings" element={<Settings></Settings>}></Route>

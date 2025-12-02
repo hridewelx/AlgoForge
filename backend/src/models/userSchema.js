@@ -76,6 +76,14 @@ const userSchema = new Schema(
       enum: ["Male", "Female", "Other", ""],
       default: "",
     },
+    // OAuth providers
+    providers: [{
+      name: {
+        type: String,
+        enum: ['google', 'github'],
+      },
+      providerId: String,
+    }],
     location: { type: String, default: "" },
     birthday: { type: Date },
     summary: { type: String, maxlength: 500, default: "" },

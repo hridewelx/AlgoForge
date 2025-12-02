@@ -11,6 +11,7 @@ import chatWithAiRoutes from "./routes/chatWithAiRoutes.js";
 import problemEditorialRoutes from "./routes/problemEditorialRoutes.js";
 import userProfileRoutes from "./routes/userProfileRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import oauthRouter from "./routes/oauthRoutes.js";
 
 const app = express();
 app.use(express.json());
@@ -20,6 +21,7 @@ app.use(cors({
     credentials: true
 }));
 app.use("/user", authenticationRouter);
+app.use("/auth", oauthRouter);
 app.use("/profile", userProfileRoutes);
 app.use("/problems", problemRoutes);
 app.use("/editorial", problemEditorialRoutes); 

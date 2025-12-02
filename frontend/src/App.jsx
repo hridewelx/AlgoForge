@@ -12,6 +12,7 @@ import UserProfile from "./pages/UserProfile";
 import Settings from "./pages/Settings";
 import DSAVisualizer from "./pages/DSAVisualizer";
 import Courses from "./pages/Courses";
+import OAuthCallback from "./pages/OAuthCallback";
 
 // In your main router configuration
 import AdminLayout from "./components/Admin/AdminLayout";
@@ -43,6 +44,7 @@ function App() {
         <Route path="/login" element={<Login></Login>}></Route>
         {/* <Route path="/signup" element={ isAuthenticated ? <Navigate to="/"></Navigate> : <Signup></Signup> }></Route> */}
         <Route path="/signup" element={<Signup></Signup>}></Route>
+        <Route path="/oauth/callback" element={<OAuthCallback />}></Route>
         <Route path="/problemset" element={<ProblemSet></ProblemSet>}></Route>
         <Route path="/visualizer" element={<DSAVisualizer />}></Route>
         <Route path="/courses" element={<Courses />}></Route>

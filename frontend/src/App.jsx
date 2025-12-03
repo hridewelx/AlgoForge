@@ -2,6 +2,8 @@ import "./App.css";
 import { Routes, Route, Navigate } from "react-router";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Homepage from "./pages/Homepage";
 import { useDispatch, useSelector } from "react-redux";
 import { checkAuthenticatedUser } from "./authenticationSlicer";
@@ -28,7 +30,9 @@ import AdminSettings from "./components/Admin/AdminSettings";
 
 function App() {
   const dispatch = useDispatch();
-  const { isAuthenticated, user } = useSelector((state) => state.authentication);
+  const { isAuthenticated, user } = useSelector(
+    (state) => state.authentication
+  );
   // console.log("isAuthenticated:", isAuthenticated);
   // console.log("User:", user);
 
@@ -44,13 +48,21 @@ function App() {
         <Route path="/login" element={<Login></Login>}></Route>
         {/* <Route path="/signup" element={ isAuthenticated ? <Navigate to="/"></Navigate> : <Signup></Signup> }></Route> */}
         <Route path="/signup" element={<Signup></Signup>}></Route>
+        <Route path="/forgot-password" element={<ForgotPassword />}></Route>
+        <Route path="/reset-password" element={<ResetPassword />}></Route>
         <Route path="/oauth/callback" element={<OAuthCallback />}></Route>
         <Route path="/problemset" element={<ProblemSet></ProblemSet>}></Route>
         <Route path="/visualizer" element={<DSAVisualizer />}></Route>
         <Route path="/courses" element={<Courses />}></Route>
-        <Route path="/algoforge/profile/:username" element={<UserProfile></UserProfile>}></Route>
-        <Route path="/algoforge/:username/settings" element={<Settings></Settings>}></Route>
-        
+        <Route
+          path="/algoforge/profile/:username"
+          element={<UserProfile></UserProfile>}
+        ></Route>
+        <Route
+          path="/algoforge/:username/settings"
+          element={<Settings></Settings>}
+        ></Route>
+
         <Route
           path="/problem/:problemId"
           element={<SolveProblem></SolveProblem>}
@@ -69,8 +81,14 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="questions" element={<Questions />} />
           <Route path="questions/create" element={<QuestionCreation />} />
-          <Route path="questions/update/:problemId" element={<QuestionUpdation />} />
-          <Route path="editorials/:problemId" element={<EditorialManagement />} />
+          <Route
+            path="questions/update/:problemId"
+            element={<QuestionUpdation />}
+          />
+          <Route
+            path="editorials/:problemId"
+            element={<EditorialManagement />}
+          />
           <Route path="users" element={<UserManagement />} />
           <Route path="analytics" element={<Analytics />} />
           <Route path="settings" element={<AdminSettings />} />

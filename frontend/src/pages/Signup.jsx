@@ -3,12 +3,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Link, useNavigate } from "react-router-dom";
 import { toast, Toaster } from "react-hot-toast";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { userRegistration } from "../authenticationSlicer";
 import { useTheme } from "../contexts/ThemeContext";
+import axios from "axios";
+import { checkAuthenticatedUser } from "../authenticationSlicer";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3515";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const signupSchema = z
   .object({
@@ -47,7 +48,7 @@ const signupSchema = z
     path: ["confirmPassword"],
   });
 
-// Icons
+// Icons (same as before)
 const EyeIcon = () => (
   <svg
     className="w-5 h-5"
@@ -172,15 +173,53 @@ const CheckIcon = ({ checked }) => (
   </svg>
 );
 
+const MailIcon = () => (
+  <svg
+    className="w-8 h-8"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+    />
+  </svg>
+);
+
 const SignupPage = () => {
   const { isDark } = useTheme();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+  // State
+  const [step, setStep] = useState(1); // 1: Form, 2: Verification
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [oauthLoading, setOauthLoading] = useState(null);
+  const [userEmail, setUserEmail] = useState("");
+  const [verificationCode, setVerificationCode] = useState([
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+  ]);
+  const [resendCountdown, setResendCountdown] = useState(0);
+
   const { isAuthenticated } = useSelector((state) => state.authentication);
+  const codeInputRefs = [
+    useRef(),
+    useRef(),
+    useRef(),
+    useRef(),
+    useRef(),
+    useRef(),
+  ];
 
   const {
     register,
@@ -194,7 +233,6 @@ const SignupPage = () => {
 
   const password = watch("password", "");
 
-  // Password strength indicators
   const passwordChecks = {
     length: password.length >= 8,
     uppercase: /[A-Z]/.test(password),
@@ -208,17 +246,107 @@ const SignupPage = () => {
     }
   }, [isAuthenticated, navigate]);
 
+  // Resend countdown
+  useEffect(() => {
+    if (resendCountdown > 0) {
+      const timer = setTimeout(
+        () => setResendCountdown(resendCountdown - 1),
+        1000
+      );
+      return () => clearTimeout(timer);
+    }
+  }, [resendCountdown]);
+
   const onSubmit = async (data) => {
     setIsLoading(true);
     try {
       const { confirmPassword, terms, ...submitData } = data;
-      await dispatch(userRegistration(submitData)).unwrap();
-      toast.success("Account created successfully!");
-      navigate("/login");
+      const response = await axios.post(
+        `${API_URL}/user/signup/send-code`,
+        submitData
+      );
+
+      toast.success(response.data.message);
+      setUserEmail(response.data.email);
+      setStep(2);
+      setResendCountdown(60);
     } catch (error) {
       toast.error(
-        error.response?.data?.message || error.message || "Signup failed"
+        error.response?.data?.message || "Failed to send verification code"
       );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCodeChange = (index, value) => {
+    // Only allow digits
+    if (value && !/^\d$/.test(value)) return;
+
+    const newCode = [...verificationCode];
+    newCode[index] = value;
+    setVerificationCode(newCode);
+
+    // Auto-focus next input
+    if (value && index < 5) {
+      codeInputRefs[index + 1].current?.focus();
+    }
+  };
+
+  const handleCodeKeyDown = (index, e) => {
+    if (e.key === "Backspace" && !verificationCode[index] && index > 0) {
+      codeInputRefs[index - 1].current?.focus();
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    const code = verificationCode.join("");
+    if (code.length !== 6) {
+      toast.error("Please enter the 6-digit code");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await axios.post(
+        `${API_URL}/user/signup/verify`,
+        {
+          email: userEmail,
+          code,
+        },
+        { withCredentials: true }
+      ); // Important: send cookies
+
+      toast.success(response.data.message);
+
+      // Backend already set the auth cookie, just refresh the auth state
+      await dispatch(checkAuthenticatedUser()).unwrap();
+
+      // Navigate to homepage
+      setTimeout(() => navigate("/"), 500);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Verification failed");
+      setVerificationCode(["", "", "", "", "", ""]);
+      codeInputRefs[0].current?.focus();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    if (resendCountdown > 0) return;
+
+    setIsLoading(true);
+    try {
+      const response = await axios.post(`${API_URL}/user/signup/resend-code`, {
+        email: userEmail,
+      });
+      toast.success(response.data.message);
+      setResendCountdown(60);
+      setVerificationCode(["", "", "", "", "", ""]);
+      codeInputRefs[0].current?.focus();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to resend code");
     } finally {
       setIsLoading(false);
     }
@@ -241,7 +369,7 @@ const SignupPage = () => {
       <Toaster
         position="top-center"
         toastOptions={{
-          duration: 3000,
+          duration: 4000,
           style: {
             background: isDark ? "#1e293b" : "#ffffff",
             color: isDark ? "#f1f5f9" : "#1e293b",
@@ -277,382 +405,517 @@ const SignupPage = () => {
             </span>
           </div>
 
-          {/* Header */}
-          <div className="text-center lg:text-left mb-8">
-            <h2
-              className={`text-2xl sm:text-3xl font-bold ${
-                isDark ? "text-white" : "text-slate-800"
-              }`}
-            >
-              Create your account
-            </h2>
-            <p
-              className={`mt-2 ${isDark ? "text-slate-400" : "text-slate-600"}`}
-            >
-              Start your coding journey today
-            </p>
-          </div>
-
-          {/* Signup Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {/* Name Fields */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label
-                  className={`block text-sm font-medium mb-1.5 ${
-                    isDark ? "text-slate-300" : "text-slate-700"
+          {step === 1 ? (
+            // STEP 1: Signup Form
+            <>
+              <div className="text-center lg:text-left mb-8">
+                <h2
+                  className={`text-2xl sm:text-3xl font-bold ${
+                    isDark ? "text-white" : "text-slate-800"
                   }`}
                 >
-                  First Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  {...register("firstName")}
-                  placeholder="John"
-                  className={`w-full px-3.5 py-3 rounded-xl transition-all duration-200 outline-none text-sm ${
-                    isDark
-                      ? "bg-slate-800/50 border border-slate-700 text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
-                      : "bg-white border border-slate-200 text-slate-800 placeholder-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
-                  } ${errors.firstName ? "border-red-500" : ""}`}
-                />
-                {errors.firstName && (
-                  <p className="mt-1 text-xs text-red-500">
-                    {errors.firstName.message}
+                  Create your account
+                </h2>
+                <p
+                  className={`mt-2 ${
+                    isDark ? "text-slate-400" : "text-slate-600"
+                  }`}
+                >
+                  Start your coding journey today
+                </p>
+              </div>
+
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                {/* Name Fields */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label
+                      className={`block text-sm font-medium mb-1.5 ${
+                        isDark ? "text-slate-300" : "text-slate-700"
+                      }`}
+                    >
+                      First Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      {...register("firstName")}
+                      placeholder="John"
+                      className={`w-full px-3.5 py-3 rounded-xl transition-all duration-200 outline-none text-sm ${
+                        isDark
+                          ? "bg-slate-800/50 border border-slate-700 text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                          : "bg-white border border-slate-200 text-slate-800 placeholder-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                      } ${errors.firstName ? "border-red-500" : ""}`}
+                    />
+                    {errors.firstName && (
+                      <p className="mt-1 text-xs text-red-500">
+                        {errors.firstName.message}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <label
+                      className={`block text-sm font-medium mb-1.5 ${
+                        isDark ? "text-slate-300" : "text-slate-700"
+                      }`}
+                    >
+                      Last Name
+                    </label>
+                    <input
+                      type="text"
+                      {...register("lastName")}
+                      placeholder="Doe"
+                      className={`w-full px-3.5 py-3 rounded-xl transition-all duration-200 outline-none text-sm ${
+                        isDark
+                          ? "bg-slate-800/50 border border-slate-700 text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                          : "bg-white border border-slate-200 text-slate-800 placeholder-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                      }`}
+                    />
+                  </div>
+                </div>
+
+                {/* Username */}
+                <div>
+                  <label
+                    className={`block text-sm font-medium mb-1.5 ${
+                      isDark ? "text-slate-300" : "text-slate-700"
+                    }`}
+                  >
+                    Username <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <span
+                      className={`absolute left-3.5 top-1/2 -translate-y-1/2 text-sm ${
+                        isDark ? "text-slate-500" : "text-slate-400"
+                      }`}
+                    >
+                      @
+                    </span>
+                    <input
+                      type="text"
+                      {...register("username")}
+                      placeholder="johndoe"
+                      className={`w-full pl-8 pr-3.5 py-3 rounded-xl transition-all duration-200 outline-none text-sm ${
+                        isDark
+                          ? "bg-slate-800/50 border border-slate-700 text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                          : "bg-white border border-slate-200 text-slate-800 placeholder-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                      } ${errors.username ? "border-red-500" : ""}`}
+                    />
+                  </div>
+                  {errors.username && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {errors.username.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Email */}
+                <div>
+                  <label
+                    className={`block text-sm font-medium mb-1.5 ${
+                      isDark ? "text-slate-300" : "text-slate-700"
+                    }`}
+                  >
+                    Email <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    {...register("emailId")}
+                    placeholder="you@example.com"
+                    className={`w-full px-3.5 py-3 rounded-xl transition-all duration-200 outline-none text-sm ${
+                      isDark
+                        ? "bg-slate-800/50 border border-slate-700 text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                        : "bg-white border border-slate-200 text-slate-800 placeholder-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                    } ${errors.emailId ? "border-red-500" : ""}`}
+                  />
+                  {errors.emailId && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {errors.emailId.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Password */}
+                <div>
+                  <label
+                    className={`block text-sm font-medium mb-1.5 ${
+                      isDark ? "text-slate-300" : "text-slate-700"
+                    }`}
+                  >
+                    Password <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      {...register("password")}
+                      placeholder="••••••••"
+                      className={`w-full px-3.5 py-3 pr-11 rounded-xl transition-all duration-200 outline-none text-sm ${
+                        isDark
+                          ? "bg-slate-800/50 border border-slate-700 text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                          : "bg-white border border-slate-200 text-slate-800 placeholder-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                      } ${errors.password ? "border-red-500" : ""}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className={`absolute right-3 top-1/2 -translate-y-1/2 ${
+                        isDark
+                          ? "text-slate-400 hover:text-slate-300"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+                    </button>
+                  </div>
+                  {password && (
+                    <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1">
+                      {[
+                        { key: "length", label: "8+ characters" },
+                        { key: "uppercase", label: "Uppercase" },
+                        { key: "lowercase", label: "Lowercase" },
+                        { key: "number", label: "Number" },
+                      ].map(({ key, label }) => (
+                        <div
+                          key={key}
+                          className="flex items-center gap-1.5 text-xs"
+                        >
+                          <CheckIcon checked={passwordChecks[key]} />
+                          <span
+                            className={
+                              passwordChecks[key]
+                                ? isDark
+                                  ? "text-emerald-400"
+                                  : "text-emerald-600"
+                                : isDark
+                                ? "text-slate-500"
+                                : "text-slate-400"
+                            }
+                          >
+                            {label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Confirm Password */}
+                <div>
+                  <label
+                    className={`block text-sm font-medium mb-1.5 ${
+                      isDark ? "text-slate-300" : "text-slate-700"
+                    }`}
+                  >
+                    Confirm Password <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      {...register("confirmPassword")}
+                      placeholder="••••••••"
+                      className={`w-full px-3.5 py-3 pr-11 rounded-xl transition-all duration-200 outline-none text-sm ${
+                        isDark
+                          ? "bg-slate-800/50 border border-slate-700 text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                          : "bg-white border border-slate-200 text-slate-800 placeholder-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                      } ${errors.confirmPassword ? "border-red-500" : ""}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
+                      className={`absolute right-3 top-1/2 -translate-y-1/2 ${
+                        isDark
+                          ? "text-slate-400 hover:text-slate-300"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      {showConfirmPassword ? <EyeOffIcon /> : <EyeIcon />}
+                    </button>
+                  </div>
+                  {errors.confirmPassword && (
+                    <p className="mt-1 text-xs text-red-500">
+                      {errors.confirmPassword.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Terms */}
+                <div className="flex items-start gap-2.5">
+                  <input
+                    type="checkbox"
+                    id="terms"
+                    {...register("terms")}
+                    className={`mt-0.5 w-4 h-4 rounded border-2 transition-colors ${
+                      isDark
+                        ? "border-slate-600 bg-slate-800 checked:bg-emerald-500 checked:border-emerald-500"
+                        : "border-slate-300 bg-white checked:bg-emerald-500 checked:border-emerald-500"
+                    } focus:ring-2 focus:ring-emerald-500/20`}
+                  />
+                  <label
+                    htmlFor="terms"
+                    className={`text-sm ${
+                      isDark ? "text-slate-400" : "text-slate-600"
+                    }`}
+                  >
+                    I agree to the{" "}
+                    <Link
+                      to="/terms"
+                      className={`font-medium ${
+                        isDark
+                          ? "text-emerald-400 hover:text-emerald-300"
+                          : "text-emerald-600 hover:text-emerald-700"
+                      }`}
+                    >
+                      Terms of Service
+                    </Link>{" "}
+                    and{" "}
+                    <Link
+                      to="/privacy"
+                      className={`font-medium ${
+                        isDark
+                          ? "text-emerald-400 hover:text-emerald-300"
+                          : "text-emerald-600 hover:text-emerald-700"
+                      }`}
+                    >
+                      Privacy Policy
+                    </Link>
+                  </label>
+                </div>
+                {errors.terms && (
+                  <p className="text-xs text-red-500 -mt-2">
+                    {errors.terms.message}
                   </p>
                 )}
-              </div>
 
-              <div>
-                <label
-                  className={`block text-sm font-medium mb-1.5 ${
-                    isDark ? "text-slate-300" : "text-slate-700"
-                  }`}
-                >
-                  Last Name
-                </label>
-                <input
-                  type="text"
-                  {...register("lastName")}
-                  placeholder="Doe"
-                  className={`w-full px-3.5 py-3 rounded-xl transition-all duration-200 outline-none text-sm ${
-                    isDark
-                      ? "bg-slate-800/50 border border-slate-700 text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
-                      : "bg-white border border-slate-200 text-slate-800 placeholder-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
-                  }`}
-                />
-              </div>
-            </div>
-
-            {/* Username */}
-            <div>
-              <label
-                className={`block text-sm font-medium mb-1.5 ${
-                  isDark ? "text-slate-300" : "text-slate-700"
-                }`}
-              >
-                Username <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <span
-                  className={`absolute left-3.5 top-1/2 -translate-y-1/2 text-sm ${
-                    isDark ? "text-slate-500" : "text-slate-400"
-                  }`}
-                >
-                  @
-                </span>
-                <input
-                  type="text"
-                  {...register("username")}
-                  placeholder="johndoe"
-                  className={`w-full pl-8 pr-3.5 py-3 rounded-xl transition-all duration-200 outline-none text-sm ${
-                    isDark
-                      ? "bg-slate-800/50 border border-slate-700 text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
-                      : "bg-white border border-slate-200 text-slate-800 placeholder-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
-                  } ${errors.username ? "border-red-500" : ""}`}
-                />
-              </div>
-              {errors.username && (
-                <p className="mt-1 text-xs text-red-500">
-                  {errors.username.message}
-                </p>
-              )}
-            </div>
-
-            {/* Email */}
-            <div>
-              <label
-                className={`block text-sm font-medium mb-1.5 ${
-                  isDark ? "text-slate-300" : "text-slate-700"
-                }`}
-              >
-                Email <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="email"
-                {...register("emailId")}
-                placeholder="you@example.com"
-                className={`w-full px-3.5 py-3 rounded-xl transition-all duration-200 outline-none text-sm ${
-                  isDark
-                    ? "bg-slate-800/50 border border-slate-700 text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
-                    : "bg-white border border-slate-200 text-slate-800 placeholder-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
-                } ${errors.emailId ? "border-red-500" : ""}`}
-              />
-              {errors.emailId && (
-                <p className="mt-1 text-xs text-red-500">
-                  {errors.emailId.message}
-                </p>
-              )}
-            </div>
-
-            {/* Password */}
-            <div>
-              <label
-                className={`block text-sm font-medium mb-1.5 ${
-                  isDark ? "text-slate-300" : "text-slate-700"
-                }`}
-              >
-                Password <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  {...register("password")}
-                  placeholder="••••••••"
-                  className={`w-full px-3.5 py-3 pr-11 rounded-xl transition-all duration-200 outline-none text-sm ${
-                    isDark
-                      ? "bg-slate-800/50 border border-slate-700 text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
-                      : "bg-white border border-slate-200 text-slate-800 placeholder-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
-                  } ${errors.password ? "border-red-500" : ""}`}
-                />
+                {/* Submit Button */}
                 <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className={`absolute right-3 top-1/2 -translate-y-1/2 ${
-                    isDark
-                      ? "text-slate-400 hover:text-slate-300"
-                      : "text-slate-500 hover:text-slate-700"
+                  type="submit"
+                  disabled={isLoading || oauthLoading !== null}
+                  className={`w-full py-3.5 px-4 rounded-xl font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2 mt-6 ${
+                    isLoading || oauthLoading
+                      ? "bg-emerald-500/50 cursor-not-allowed"
+                      : "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40"
                   }`}
                 >
-                  {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+                  {isLoading ? (
+                    <>
+                      <LoadingSpinner />
+                      <span>Sending code...</span>
+                    </>
+                  ) : (
+                    "Create account"
+                  )}
                 </button>
-              </div>
+              </form>
 
-              {/* Password Strength */}
-              {password && (
-                <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1">
-                  {[
-                    { key: "length", label: "8+ characters" },
-                    { key: "uppercase", label: "Uppercase" },
-                    { key: "lowercase", label: "Lowercase" },
-                    { key: "number", label: "Number" },
-                  ].map(({ key, label }) => (
-                    <div
-                      key={key}
-                      className="flex items-center gap-1.5 text-xs"
-                    >
-                      <CheckIcon checked={passwordChecks[key]} />
-                      <span
-                        className={
-                          passwordChecks[key]
-                            ? isDark
-                              ? "text-emerald-400"
-                              : "text-emerald-600"
-                            : isDark
-                            ? "text-slate-500"
-                            : "text-slate-400"
-                        }
-                      >
-                        {label}
-                      </span>
-                    </div>
-                  ))}
+              {/* Divider */}
+              <div className="relative my-6">
+                <div className={`absolute inset-0 flex items-center`}>
+                  <div
+                    className={`w-full border-t ${
+                      isDark ? "border-slate-800" : "border-slate-200"
+                    }`}
+                  />
                 </div>
-              )}
-            </div>
+                <div className="relative flex justify-center text-sm">
+                  <span
+                    className={`px-4 ${
+                      isDark
+                        ? "bg-slate-950 text-slate-500"
+                        : "bg-slate-50 text-slate-500"
+                    }`}
+                  >
+                    or register with
+                  </span>
+                </div>
+              </div>
 
-            {/* Confirm Password */}
-            <div>
-              <label
-                className={`block text-sm font-medium mb-1.5 ${
-                  isDark ? "text-slate-300" : "text-slate-700"
-                }`}
-              >
-                Confirm Password <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <input
-                  type={showConfirmPassword ? "text" : "password"}
-                  {...register("confirmPassword")}
-                  placeholder="••••••••"
-                  className={`w-full px-3.5 py-3 pr-11 rounded-xl transition-all duration-200 outline-none text-sm ${
-                    isDark
-                      ? "bg-slate-800/50 border border-slate-700 text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
-                      : "bg-white border border-slate-200 text-slate-800 placeholder-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
-                  } ${errors.confirmPassword ? "border-red-500" : ""}`}
-                />
+              {/* OAuth Buttons */}
+              <div className="grid grid-cols-2 gap-3 mb-6">
                 <button
                   type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className={`absolute right-3 top-1/2 -translate-y-1/2 ${
+                  onClick={handleGoogleLogin}
+                  disabled={oauthLoading !== null}
+                  className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
                     isDark
-                      ? "text-slate-400 hover:text-slate-300"
-                      : "text-slate-500 hover:text-slate-700"
-                  }`}
+                      ? "bg-slate-800/50 hover:bg-slate-800 text-white border border-slate-700 hover:border-slate-600"
+                      : "bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 shadow-sm"
+                  } ${oauthLoading ? "opacity-60 cursor-not-allowed" : ""}`}
                 >
-                  {showConfirmPassword ? <EyeOffIcon /> : <EyeIcon />}
+                  {oauthLoading === "google" ? (
+                    <LoadingSpinner />
+                  ) : (
+                    <GoogleIcon />
+                  )}
+                  <span className="hidden sm:inline">Google</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleGithubLogin}
+                  disabled={oauthLoading !== null}
+                  className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
+                    isDark
+                      ? "bg-slate-800/50 hover:bg-slate-800 text-white border border-slate-700 hover:border-slate-600"
+                      : "bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 shadow-sm"
+                  } ${oauthLoading ? "opacity-60 cursor-not-allowed" : ""}`}
+                >
+                  {oauthLoading === "github" ? (
+                    <LoadingSpinner />
+                  ) : (
+                    <GitHubIcon />
+                  )}
+                  <span className="hidden sm:inline">GitHub</span>
                 </button>
               </div>
-              {errors.confirmPassword && (
-                <p className="mt-1 text-xs text-red-500">
-                  {errors.confirmPassword.message}
-                </p>
-              )}
-            </div>
 
-            {/* Terms */}
-            <div className="flex items-start gap-2.5">
-              <input
-                type="checkbox"
-                id="terms"
-                {...register("terms")}
-                className={`mt-0.5 w-4 h-4 rounded border-2 transition-colors ${
-                  isDark
-                    ? "border-slate-600 bg-slate-800 checked:bg-emerald-500 checked:border-emerald-500"
-                    : "border-slate-300 bg-white checked:bg-emerald-500 checked:border-emerald-500"
-                } focus:ring-2 focus:ring-emerald-500/20`}
-              />
-              <label
-                htmlFor="terms"
-                className={`text-sm ${
+              {/* Sign In Link */}
+              <p
+                className={`mt-6 text-center ${
                   isDark ? "text-slate-400" : "text-slate-600"
                 }`}
               >
-                I agree to the{" "}
+                Already have an account?{" "}
                 <Link
-                  to="/terms"
-                  className={`font-medium ${
+                  to="/login"
+                  className={`font-semibold ${
                     isDark
                       ? "text-emerald-400 hover:text-emerald-300"
                       : "text-emerald-600 hover:text-emerald-700"
                   }`}
                 >
-                  Terms of Service
-                </Link>{" "}
-                and{" "}
-                <Link
-                  to="/privacy"
-                  className={`font-medium ${
-                    isDark
-                      ? "text-emerald-400 hover:text-emerald-300"
-                      : "text-emerald-600 hover:text-emerald-700"
-                  }`}
-                >
-                  Privacy Policy
+                  Sign in
                 </Link>
-              </label>
-            </div>
-            {errors.terms && (
-              <p className="text-xs text-red-500 -mt-2">
-                {errors.terms.message}
               </p>
-            )}
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isLoading || oauthLoading !== null}
-              className={`w-full py-3.5 px-4 rounded-xl font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2 mt-6 ${
-                isLoading || oauthLoading
-                  ? "bg-emerald-500/50 cursor-not-allowed"
-                  : "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40"
-              }`}
-            >
-              {isLoading ? (
-                <>
-                  <LoadingSpinner />
-                  <span>Creating account...</span>
-                </>
-              ) : (
-                "Create account"
-              )}
-            </button>
-          </form>
-
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className={`absolute inset-0 flex items-center`}>
+            </>
+          ) : (
+            // STEP 2: Verification Code
+            <div className="text-center">
               <div
-                className={`w-full border-t ${
-                  isDark ? "border-slate-800" : "border-slate-200"
-                }`}
-              />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span
-                className={`px-4 ${
-                  isDark
-                    ? "bg-slate-950 text-slate-500"
-                    : "bg-slate-50 text-slate-500"
+                className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-6 ${
+                  isDark ? "bg-cyan-500/20" : "bg-cyan-100"
                 }`}
               >
-                or register with email
-              </span>
+                <MailIcon
+                  className={`${isDark ? "text-cyan-400" : "text-cyan-600"}`}
+                />
+              </div>
+
+              <h2
+                className={`text-2xl font-bold mb-3 ${
+                  isDark ? "text-white" : "text-slate-800"
+                }`}
+              >
+                Check your email
+              </h2>
+              <p
+                className={`mb-2 ${
+                  isDark ? "text-slate-400" : "text-slate-600"
+                }`}
+              >
+                We've sent a 6-digit verification code to:
+              </p>
+              <p
+                className={`font-semibold mb-8 ${
+                  isDark ? "text-emerald-400" : "text-emerald-600"
+                }`}
+              >
+                {userEmail}
+              </p>
+
+              {/* Code Input */}
+              <div className="flex justify-center gap-2 mb-6">
+                {verificationCode.map((digit, index) => (
+                  <input
+                    key={index}
+                    ref={codeInputRefs[index]}
+                    type="text"
+                    maxLength="1"
+                    value={digit}
+                    onChange={(e) => handleCodeChange(index, e.target.value)}
+                    onKeyDown={(e) => handleCodeKeyDown(index, e)}
+                    className={`w-12 h-14 text-center text-2xl font-bold rounded-xl transition-all duration-200 outline-none ${
+                      isDark
+                        ? "bg-slate-800/50 border-2 border-slate-700 text-white focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+                        : "bg-white border-2 border-slate-200 text-slate-800 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+                    }`}
+                  />
+                ))}
+              </div>
+
+              {/* Verify Button */}
+              <button
+                onClick={handleVerifyCode}
+                disabled={isLoading || verificationCode.join("").length !== 6}
+                className={`w-full py-3.5 px-4 rounded-xl font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2 mb-4 ${
+                  isLoading || verificationCode.join("").length !== 6
+                    ? "bg-cyan-500/50 cursor-not-allowed"
+                    : "bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40"
+                }`}
+              >
+                {isLoading ? (
+                  <>
+                    <LoadingSpinner />
+                    <span>Verifying...</span>
+                  </>
+                ) : (
+                  "Verify Email"
+                )}
+              </button>
+
+              {/* Resend Code */}
+              <div
+                className={`p-4 rounded-xl mb-6 ${
+                  isDark ? "bg-slate-800/50" : "bg-slate-100"
+                }`}
+              >
+                <p
+                  className={`text-sm ${
+                    isDark ? "text-slate-400" : "text-slate-600"
+                  }`}
+                >
+                  Didn't receive the code?{" "}
+                  {resendCountdown > 0 ? (
+                    <span
+                      className={isDark ? "text-slate-500" : "text-slate-400"}
+                    >
+                      Resend in {resendCountdown}s
+                    </span>
+                  ) : (
+                    <button
+                      onClick={handleResendCode}
+                      disabled={isLoading}
+                      className={`font-medium ${
+                        isDark
+                          ? "text-cyan-400 hover:text-cyan-300"
+                          : "text-cyan-600 hover:text-cyan-700"
+                      } disabled:opacity-50`}
+                    >
+                      Resend code
+                    </button>
+                  )}
+                </p>
+              </div>
+
+              {/* Back Link */}
+              <button
+                onClick={() => {
+                  setStep(1);
+                  setVerificationCode(["", "", "", "", "", ""]);
+                }}
+                className={`text-sm font-medium ${
+                  isDark
+                    ? "text-slate-400 hover:text-slate-300"
+                    : "text-slate-600 hover:text-slate-700"
+                }`}
+              >
+                ← Back to signup
+              </button>
             </div>
-          </div>
-
-          {/* OAuth Buttons */}
-          <div className="grid grid-cols-2 gap-3 mb-6">
-            <button
-              type="button"
-              onClick={handleGoogleLogin}
-              disabled={oauthLoading !== null}
-              className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
-                isDark
-                  ? "bg-slate-800/50 hover:bg-slate-800 text-white border border-slate-700 hover:border-slate-600"
-                  : "bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 shadow-sm"
-              } ${oauthLoading ? "opacity-60 cursor-not-allowed" : ""}`}
-            >
-              {oauthLoading === "google" ? <LoadingSpinner /> : <GoogleIcon />}
-              <span className="hidden sm:inline">Google</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleGithubLogin}
-              disabled={oauthLoading !== null}
-              className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
-                isDark
-                  ? "bg-slate-800/50 hover:bg-slate-800 text-white border border-slate-700 hover:border-slate-600"
-                  : "bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 shadow-sm"
-              } ${oauthLoading ? "opacity-60 cursor-not-allowed" : ""}`}
-            >
-              {oauthLoading === "github" ? <LoadingSpinner /> : <GitHubIcon />}
-              <span className="hidden sm:inline">GitHub</span>
-            </button>
-          </div>
-
-          {/* Sign In Link */}
-          <p
-            className={`mt-6 text-center ${
-              isDark ? "text-slate-400" : "text-slate-600"
-            }`}
-          >
-            Already have an account?{" "}
-            <Link
-              to="/login"
-              className={`font-semibold ${
-                isDark
-                  ? "text-emerald-400 hover:text-emerald-300"
-                  : "text-emerald-600 hover:text-emerald-700"
-              }`}
-            >
-              Sign in
-            </Link>
-          </p>
+          )}
         </div>
       </div>
 
-      {/* Right Panel - Branding */}
+      {/* Right Panel - Branding (same as before, keeping it concise) */}
       <div
         className={`hidden lg:flex lg:w-1/2 xl:w-[55%] relative overflow-hidden ${
           isDark
@@ -660,43 +923,33 @@ const SignupPage = () => {
             : "bg-gradient-to-bl from-cyan-600 via-emerald-700 to-slate-800"
         }`}
       >
-        {/* Animated Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-40 right-20 w-72 h-72 bg-white rounded-full blur-3xl animate-pulse" />
           <div className="absolute bottom-20 left-20 w-96 h-96 bg-cyan-300 rounded-full blur-3xl animate-pulse delay-1000" />
           <div className="absolute top-1/3 right-1/3 w-64 h-64 bg-emerald-300 rounded-full blur-3xl animate-pulse delay-500" />
         </div>
-
-        {/* Code Pattern */}
         <div
           className="absolute inset-0 opacity-5"
           style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
           }}
         />
-
         <div className="relative z-10 flex flex-col justify-center px-16 xl:px-24 2xl:px-32 h-full">
-          {/* Logo */}
           <div className="flex items-center gap-3 mb-12">
             <div className="p-3 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
               <CodeIcon />
             </div>
             <span className="text-3xl font-bold text-white">AlgoForge</span>
           </div>
-
-          {/* Main Content */}
           <h1 className="text-4xl xl:text-5xl font-bold text-white mb-6 leading-tight">
             Start solving.
             <br />
             <span className="text-cyan-300">Start growing.</span>
           </h1>
-
           <p className="text-lg text-white/70 mb-10 max-w-md leading-relaxed">
             Create your free account and join a community of developers who are
             passionate about algorithms and competitive programming.
           </p>
-
-          {/* Stats */}
           <div className="grid grid-cols-3 gap-6 mb-10">
             {[
               { value: "50K+", label: "Active Users" },
@@ -706,35 +959,6 @@ const SignupPage = () => {
               <div key={i} className="text-center">
                 <p className="text-3xl font-bold text-white">{stat.value}</p>
                 <p className="text-white/60 text-sm mt-1">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Features List */}
-          <div className="space-y-4 p-6 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10">
-            <h3 className="text-white font-semibold mb-4">What you'll get:</h3>
-            {[
-              "Access to 500+ curated coding problems",
-              "Real-time code execution in 10+ languages",
-              "Detailed editorials and video solutions",
-              "Progress tracking and analytics",
-              "AI-powered hints when you're stuck",
-            ].map((feature, i) => (
-              <div key={i} className="flex items-center gap-3 text-white/80">
-                <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-                  <svg
-                    className="w-3 h-3 text-emerald-400"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <span className="text-sm">{feature}</span>
               </div>
             ))}
           </div>

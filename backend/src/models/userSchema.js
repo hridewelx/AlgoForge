@@ -37,12 +37,12 @@ const userSchema = new Schema(
       type: [String],
       default: [],
       validate: {
-        validator: function(emails) {
+        validator: function (emails) {
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          return emails.every(email => emailRegex.test(email));
+          return emails.every((email) => emailRegex.test(email));
         },
-        message: "Invalid email format in secondary emails"
-      }
+        message: "Invalid email format in secondary emails",
+      },
     },
     age: {
       type: Number,
@@ -77,13 +77,15 @@ const userSchema = new Schema(
       default: "",
     },
     // OAuth providers
-    providers: [{
-      name: {
-        type: String,
-        enum: ['google', 'github'],
+    providers: [
+      {
+        name: {
+          type: String,
+          enum: ["google", "github"],
+        },
+        providerId: String,
       },
-      providerId: String,
-    }],
+    ],
     location: { type: String, default: "" },
     birthday: { type: Date },
     summary: { type: String, maxlength: 500, default: "" },
@@ -91,7 +93,12 @@ const userSchema = new Schema(
     github: { type: String, default: "" },
     linkedin: { type: String, default: "" },
     twitter: { type: String, default: "" },
-    avatar: { type: String, default: "" }
+    avatar: { type: String, default: "" },
+    // Email verification
+    emailVerified: { type: Boolean, default: false },
+    // Password reset fields
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
   },
   {
     timestamps: true,

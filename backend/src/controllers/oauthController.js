@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import User from "../models/userSchema.js";
 import crypto from "crypto";
+import { sendWelcomeEmail } from "../utils/emailService.js";
 
 const FRONTEND_URL = process.env.FRONTEND_URL;
 
@@ -24,7 +25,7 @@ const generateToken = (user) => {
 export const googleAuth = async (req, res) => {
   try {
     const state = crypto.randomBytes(16).toString("hex");
-    
+
     // Store state in cookie for CSRF protection
     res.cookie("google_oauth_state", state, {
       httpOnly: true,
@@ -119,7 +120,9 @@ export const googleCallback = async (req, res) => {
     });
 
     if (user) {
-      const hasGoogleProvider = user.providers?.some((p) => p.name === "google");
+      const hasGoogleProvider = user.providers?.some(
+        (p) => p.name === "google"
+      );
       if (!hasGoogleProvider) {
         user.providers = user.providers || [];
         user.providers.push({ name: "google", providerId: googleUser.id });
@@ -131,8 +134,12 @@ export const googleCallback = async (req, res) => {
     } else {
       const username = generateUsername(googleUser.name, googleUser.email);
       user = await User.create({
-        firstName: googleUser.given_name || googleUser.name?.split(" ")[0] || "User",
-        lastName: googleUser.family_name || googleUser.name?.split(" ").slice(1).join(" ") || "",
+        firstName:
+          googleUser.given_name || googleUser.name?.split(" ")[0] || "User",
+        lastName:
+          googleUser.family_name ||
+          googleUser.name?.split(" ").slice(1).join(" ") ||
+          "",
         emailId: googleUser.email.toLowerCase(),
         username,
         password: crypto.randomBytes(32).toString("hex"),
@@ -140,6 +147,11 @@ export const googleCallback = async (req, res) => {
         avatar: googleUser.picture || "",
         providers: [{ name: "google", providerId: googleUser.id }],
       });
+
+      // Send welcome email for new OAuth users (background)
+      sendWelcomeEmail(user.emailId, user.firstName, user.username).catch(
+        (err) => console.error("Welcome email failed:", err)
+      );
     }
 
     // Generate JWT and set cookie
@@ -147,7 +159,7 @@ export const googleCallback = async (req, res) => {
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: 60 * 60 * 1000,
       sameSite: "lax",
     });
 
@@ -211,19 +223,22 @@ export const githubCallback = async (req, res) => {
     }
 
     // Exchange code for access token
-    const tokenResponse = await fetch("https://github.com/login/oauth/access_token", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({
-        client_id: process.env.GITHUB_CLIENT_ID,
-        client_secret: process.env.GITHUB_CLIENT_SECRET,
-        code,
-        redirect_uri: process.env.GITHUB_CALLBACK_URL,
-      }),
-    });
+    const tokenResponse = await fetch(
+      "https://github.com/login/oauth/access_token",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          client_id: process.env.GITHUB_CLIENT_ID,
+          client_secret: process.env.GITHUB_CLIENT_SECRET,
+          code,
+          redirect_uri: process.env.GITHUB_CALLBACK_URL,
+        }),
+      }
+    );
 
     const tokens = await tokenResponse.json();
 
@@ -267,15 +282,23 @@ export const githubCallback = async (req, res) => {
       $or: [
         { emailId: email.toLowerCase() },
         { secondaryEmails: email.toLowerCase() },
-        { "providers.providerId": String(githubUser.id), "providers.name": "github" },
+        {
+          "providers.providerId": String(githubUser.id),
+          "providers.name": "github",
+        },
       ],
     });
 
     if (user) {
-      const hasGithubProvider = user.providers?.some((p) => p.name === "github");
+      const hasGithubProvider = user.providers?.some(
+        (p) => p.name === "github"
+      );
       if (!hasGithubProvider) {
         user.providers = user.providers || [];
-        user.providers.push({ name: "github", providerId: String(githubUser.id) });
+        user.providers.push({
+          name: "github",
+          providerId: String(githubUser.id),
+        });
         if (!user.github && githubUser.html_url) {
           user.github = githubUser.html_url;
         }
@@ -286,7 +309,10 @@ export const githubCallback = async (req, res) => {
       }
     } else {
       const nameParts = (githubUser.name || githubUser.login).split(" ");
-      const username = generateUsername(githubUser.login || githubUser.name, email);
+      const username = generateUsername(
+        githubUser.login || githubUser.name,
+        email
+      );
 
       user = await User.create({
         firstName: nameParts[0] || "User",
@@ -299,6 +325,11 @@ export const githubCallback = async (req, res) => {
         github: githubUser.html_url || "",
         providers: [{ name: "github", providerId: String(githubUser.id) }],
       });
+
+      // Send welcome email for new OAuth users (background)
+      sendWelcomeEmail(user.emailId, user.firstName, user.username).catch(
+        (err) => console.error("Welcome email failed:", err)
+      );
     }
 
     // Generate JWT and set cookie
@@ -306,7 +337,7 @@ export const githubCallback = async (req, res) => {
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: 60 * 60 * 1000,
       sameSite: "lax",
     });
 
